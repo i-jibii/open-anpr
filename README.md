@@ -20,7 +20,7 @@ pinned: false
 ## 🌍 Live Demo
 Experience the system live directly in your browser (Desktop or Mobile):
 
-* **Frontend App:** [https://open-anpr.vercel.app](https://open-anpr.vercel.app) *(Note: replace with your actual Vercel URL)*
+* **Frontend App:** [https://open-anpr.vercel.app](https://open-anpr.vercel.app)
 * **Backend API Docs:** [https://burn2179-open-anpr-api.hf.space/docs](https://burn2179-open-anpr-api.hf.space/docs)
 
 ---
@@ -105,4 +105,4 @@ npm run dev
 ```
 
 ---
-*Developed by Jessie Bryn M. Vasquez (2021-0397)*
+*Developed by Jessie Bryn M. Vasquez*
