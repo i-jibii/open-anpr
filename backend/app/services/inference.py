@@ -297,7 +297,7 @@ def analyze_capture(image_bytes: bytes) -> dict:
 
                     if text_parts:
                         # Filter out junk text commonly found on temporary plates or borders
-                        junk_words = ["REGION", "FORREGISTRATION", "REGISTERED", "DEALER", "TEMPORARY", "MVFILE"]
+                        junk_words = ["REGION", "FORREGISTRATION", "REGISTERED", "DEALER", "TEMPORARY", "MVFILE", "NCR", "PHILIPPINES", "PILIPINAS", "MATATAG"]
                         raw_text = "".join(text_parts).upper()
                         
                         # Strip all non-alphanumeric characters
