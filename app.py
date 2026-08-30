@@ -37,7 +37,7 @@ _original_create_app = gradio.routes.App.create_app
 @classmethod  
 def _patched_create_app(cls, blocks, *args, **kwargs):
     """Inject our FastAPI routes into the Gradio app during creation."""
-    gradio_app = _original_create_app.__func__(cls, blocks, *args, **kwargs)
+    gradio_app = _original_create_app(blocks, *args, **kwargs)
     
     # Copy all routes from our FastAPI app into the Gradio app
     for route in fastapi_app.routes:
