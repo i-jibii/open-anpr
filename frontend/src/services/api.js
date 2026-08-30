@@ -77,5 +77,7 @@ export const getVehicles = () => api.get('/vehicles');
 
 export const deleteVehicle = (vehicleId) => api.delete(`/vehicles/${vehicleId}`);
 
+export const updateVehicle = (vehicleId, data) => api.put(`/vehicles/${vehicleId}`, data);
+
 export const getStats = () => api.get('/stats');
 

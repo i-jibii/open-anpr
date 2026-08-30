@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { registerVehicle, getVehicles, deleteVehicle } from '../services/api';
-import { CheckCircle2, Ban, Clock, Trash2, ArrowUpRight, ArrowDownLeft, ChevronDown } from 'lucide-react';
+import { registerVehicle, getVehicles, deleteVehicle, updateVehicle } from '../services/api';
+import { CheckCircle2, Ban, Clock, Trash2, ArrowUpRight, ArrowDownLeft, ChevronDown, Edit2, X } from 'lucide-react';
 import './RegisterPage.css';
 
 const VEHICLE_TYPES = ['Car', 'Motorcycle', 'Van', 'Truck', 'Other'];
@@ -134,6 +134,70 @@ export default function RegisterPage() {
   const [message, setMessage] = useState(null); // { type: 'success'|'error', text: '' }
   const [deleteTarget, setDeleteTarget] = useState(null); // { id, plate_number }
   const [isDeleting, setIsDeleting] = useState(false);
+  const [editingVehicle, setEditingVehicle] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editForm, setEditForm] = useState(null);
+
+  const openEditModal = (v) => {
+    setEditingVehicle(v);
+    
+    // Map backend enums back to dropdown options
+    let statusLabel = 'Approved (Normal)';
+    if (v.status === 'blacklisted') statusLabel = 'Blacklisted (Test breach)';
+    if (v.status === 'expired') statusLabel = 'Expired (Test breach)';
+    
+    setEditForm({
+      plate_number: v.plate_number,
+      type: v.type.charAt(0).toUpperCase() + v.type.slice(1),
+      brand: v.brand || '',
+      color: v.color || '',
+      status: statusLabel,
+    });
+  };
+
+  const handleEditChange = (e) => {
+    const { name, value } = e.target;
+    setEditForm((prev) => ({
+      ...prev,
+      [name]: name === 'plate_number' ? value.toUpperCase() : value,
+    }));
+  };
+
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    if (!editForm.plate_number.trim() || !editForm.type || !editForm.brand || !editForm.color || !editForm.status) {
+      alert('All fields are required.');
+      return;
+    }
+    
+    if (!VEHICLE_BRANDS.includes(editForm.brand)) return alert('Invalid Brand.');
+    if (!VEHICLE_COLORS.includes(editForm.color.toLowerCase()) && editForm.color !== '') return alert('Invalid Color.');
+    if (!VEHICLE_TYPES.includes(editForm.type)) return alert('Invalid Type.');
+    if (!VEHICLE_STATUSES.includes(editForm.status)) return alert('Invalid Status.');
+
+    let backendStatus = 'approved';
+    if (editForm.status.includes('Blacklisted')) backendStatus = 'blacklisted';
+    if (editForm.status.includes('Expired')) backendStatus = 'expired';
+
+    const payload = {
+      ...editForm,
+      type: editForm.type.toLowerCase(),
+      color: editForm.color.toLowerCase(),
+      status: backendStatus
+    };
+
+    setIsEditing(true);
+    try {
+      const res = await updateVehicle(editingVehicle.id, payload);
+      setVehicles((prev) => prev.map(v => v.id === editingVehicle.id ? res.data.vehicle : v));
+      setEditingVehicle(null);
+      setEditForm(null);
+    } catch (err) {
+      alert(err?.response?.data?.detail || 'Update failed. Please try again.');
+    } finally {
+      setIsEditing(false);
+    }
+  };
 
   useEffect(() => {
     fetchVehicles();
@@ -355,13 +419,24 @@ export default function RegisterPage() {
                     </span>
                   )}
                   
-                  <button
-                    className="delete-btn"
-                    onClick={() => setDeleteTarget(v)}
-                    title="Remove vehicle"
-                  >
-                    <Trash2 size={16} />
-                  </button>
+                  <div style={{ display: 'flex', gap: '8px', marginLeft: 'auto' }}>
+                    <button
+                      className="edit-btn"
+                      onClick={() => openEditModal(v)}
+                      title="Edit vehicle"
+                      style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}
+                    >
+                      <Edit2 size={16} />
+                    </button>
+                    <button
+                      className="delete-btn"
+                      onClick={() => setDeleteTarget(v)}
+                      title="Remove vehicle"
+                      style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -402,6 +477,95 @@ export default function RegisterPage() {
                 )}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Modal */}
+      {editingVehicle && (
+        <div className="modal-overlay" onClick={() => setEditingVehicle(null)}>
+          <div className="modal-card edit-modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3 className="modal-title">Edit Vehicle</h3>
+              <button className="close-btn" onClick={() => setEditingVehicle(null)}>
+                <X size={20} />
+              </button>
+            </div>
+            
+            <form className="register-form" onSubmit={handleEditSubmit} style={{ marginTop: '20px' }}>
+              <div className="form-group">
+                <label htmlFor="edit_plate_number">Plate Number *</label>
+                <input
+                  id="edit_plate_number"
+                  name="plate_number"
+                  type="text"
+                  placeholder="e.g. ABC1234"
+                  value={editForm.plate_number}
+                  onChange={handleEditChange}
+                  autoComplete="off"
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="edit_type">Vehicle Type *</label>
+                <SearchableSelect
+                  id="edit_type"
+                  name="type"
+                  options={VEHICLE_TYPES}
+                  value={editForm.type}
+                  onChange={handleEditChange}
+                  placeholder="Select Vehicle Type"
+                  searchable={false}
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="edit_brand">Brand</label>
+                <SearchableSelect
+                  id="edit_brand"
+                  name="brand"
+                  options={VEHICLE_BRANDS}
+                  value={editForm.brand}
+                  onChange={handleEditChange}
+                  placeholder="-- Type or Select Brand --"
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="edit_color">Color</label>
+                <SearchableSelect
+                  id="edit_color"
+                  name="color"
+                  options={VEHICLE_COLORS}
+                  value={editForm.color}
+                  onChange={handleEditChange}
+                  placeholder="-- Type or Select Color --"
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="edit_status">Status (For Demo Testing) *</label>
+                <SearchableSelect
+                  id="edit_status"
+                  name="status"
+                  options={VEHICLE_STATUSES}
+                  value={editForm.status}
+                  onChange={handleEditChange}
+                  placeholder="Select Status"
+                  searchable={false}
+                />
+              </div>
+
+              <button 
+                type="submit" 
+                className="btn btn-primary" 
+                disabled={isEditing}
+                style={{ marginTop: '10px' }}
+              >
+                {isEditing ? 'Saving...' : 'Save Changes'}
+              </button>
+            </form>
           </div>
         </div>
       )}

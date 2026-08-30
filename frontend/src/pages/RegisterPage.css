@@ -479,3 +479,39 @@
   from { opacity: 0; transform: translateY(16px) scale(0.96); }
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   EDIT MODAL
+   ══════════════════════════════════════════════════════════════════════════════ */
+.edit-modal-card {
+  text-align: left;
+  max-width: 500px;
+  padding: 2rem;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 1rem;
+}
+
+.modal-header .modal-title {
+  margin: 0;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.close-btn:hover {
+  color: var(--red);
+}

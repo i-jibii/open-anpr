@@ -470,6 +470,69 @@ def delete_vehicle(
     return {"status": "ok", "deleted_id": vehicle_id}
 
 
+@router.put("/vehicles/{vehicle_id}", summary="Update a vehicle")
+@limiter.limit("30/minute")
+def update_vehicle(
+    request: Request,
+    vehicle_id: str,
+    body: RegisterRequest,
+    db: Session = Depends(get_db),
+    session_id: str = Depends(_get_session_id),
+):
+    """Update a vehicle's details."""
+    vehicle = (
+        db.query(SessionVehicle)
+        .filter(
+            SessionVehicle.id == vehicle_id,
+            SessionVehicle.session_id == session_id,
+        )
+        .first()
+    )
+    if not vehicle:
+        raise HTTPException(status_code=404, detail="Vehicle not found in this session.")
+
+    key = normalize_plate_key(body.plate_number)
+    if not key:
+        raise HTTPException(status_code=400, detail="Invalid plate number.")
+
+    # Check for conflicts
+    if key != vehicle.plate_normalized:
+        existing = (
+            db.query(SessionVehicle)
+            .filter(
+                SessionVehicle.session_id == session_id,
+                SessionVehicle.plate_normalized == key,
+            )
+            .first()
+        )
+        if existing:
+            raise HTTPException(
+                status_code=409,
+                detail=f"Plate '{body.plate_number.upper()}' is already registered.",
+            )
+
+    try:
+        v_type = VehicleType(body.type)
+    except ValueError:
+        v_type = VehicleType.car
+
+    try:
+        v_status = VehicleStatus(body.status)
+    except ValueError:
+        v_status = VehicleStatus.approved
+
+    vehicle.plate_number = format_plate_display(body.plate_number)
+    vehicle.plate_normalized = key
+    vehicle.type = v_type
+    vehicle.brand = body.brand
+    vehicle.color = body.color
+    vehicle.status = v_status
+
+    db.commit()
+    db.refresh(vehicle)
+    return {"status": "ok", "vehicle": _vehicle_to_dict(vehicle)}
+
+
 @router.get("/stats", summary="Get session statistics")
 @limiter.limit("60/minute")
 def get_session_stats(
