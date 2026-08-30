@@ -140,7 +140,7 @@ export default function HomePage() {
           <p className="dev-title">Junior Software Engineer</p>
           <p className="dev-bio">
             A solutions-driven engineer specializing in full-stack web development and computer vision pipelines. 
-            Currently pursuing a BSIT at Caraga State University. OpenANPR is a portfolio project showcasing expertise 
+            BSIT Graduate from Caraga State University. OpenANPR is a portfolio project showcasing expertise 
             in architecting automated detection systems, stateless APIs, and secure application design.
           </p>
           <div className="dev-links">
