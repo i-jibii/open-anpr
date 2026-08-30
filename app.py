@@ -10,8 +10,6 @@ import gradio as gr
 import spaces
 
 # ── ZeroGPU dummy function ──────────────────────────────────────────────────
-# This function exists ONLY to satisfy Hugging Face's ZeroGPU requirement.
-# Our actual ML inference runs on CPU through FastAPI endpoints.
 @spaces.GPU
 def gpu_status_check():
     return "ZeroGPU is active. FastAPI backend is running."
@@ -26,39 +24,58 @@ with demo:
     out = gr.Textbox(label="Status")
     btn.click(fn=gpu_status_check, inputs=[], outputs=[out])
 
-# ── Mount FastAPI routes onto Gradio's internal app ──────────────────────────
-# We must use demo.launch() for ZeroGPU to work. Before that, we hook into
-# Gradio's app creation to inject our FastAPI routes.
-from backend.app.main import app as fastapi_app
+# ── Inject our API routes into Gradio's internal app ─────────────────────────
+# We mount ONLY the router (not the full FastAPI app) to avoid template conflicts.
 import gradio.routes
 
 _original_create_app = gradio.routes.App.create_app
 
-@classmethod  
+@classmethod
 def _patched_create_app(cls, blocks, *args, **kwargs):
-    """Inject our FastAPI routes into the Gradio app during creation."""
+    """Add our FastAPI API routes into the Gradio app cleanly."""
     gradio_app = _original_create_app(blocks, *args, **kwargs)
-    
-    # Copy all routes from our FastAPI app into the Gradio app
-    for route in fastapi_app.routes:
-        gradio_app.routes.append(route)
-    
-    # Copy middleware (CORS, security headers, rate limiting)
-    for middleware in reversed(fastapi_app.user_middleware):
-        gradio_app.add_middleware(middleware.cls, **middleware.kwargs)
-    
-    # Copy exception handlers
-    for exc, handler in fastapi_app.exception_handlers.items():
-        gradio_app.add_exception_handler(exc, handler)
-    
-    # Copy state (rate limiter)
-    gradio_app.state.limiter = getattr(fastapi_app.state, 'limiter', None)
-    
+
+    # Import only what we need — no conflicting middleware
+    from app.api.public import router as public_router
+    from app.utils.rate_limit import limiter
+    from slowapi import _rate_limit_exceeded_handler
+    from slowapi.errors import RateLimitExceeded
+    from app.services.alerts_ws import alerts_ws_manager
+    from fastapi import WebSocket, WebSocketDisconnect
+
+    # Rate limiter
+    gradio_app.state.limiter = limiter
+    gradio_app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+    # Mount our API router at /api/public
+    gradio_app.include_router(public_router, prefix="/api/public", tags=["Public ANPR"])
+
+    # Health check endpoint
+    @gradio_app.get("/health")
+    def health():
+        return {"status": "healthy"}
+
+    # Swagger docs endpoint
+    @gradio_app.get("/docs", include_in_schema=False)
+    async def custom_docs():
+        from fastapi.openapi.docs import get_swagger_ui_html
+        return get_swagger_ui_html(openapi_url="/openapi.json", title="OpenANPR API")
+
+    # WebSocket for live detections
+    @gradio_app.websocket("/ws/detections")
+    async def ws_detections(websocket: WebSocket):
+        await alerts_ws_manager.connect(websocket)
+        try:
+            while True:
+                await websocket.receive_text()
+        except WebSocketDisconnect:
+            pass
+        finally:
+            alerts_ws_manager.disconnect(websocket)
+
     return gradio_app
 
 gradio.routes.App.create_app = _patched_create_app
 
 # ── Launch via Gradio (REQUIRED for ZeroGPU) ─────────────────────────────────
-# This is the ONLY way to satisfy ZeroGPU's startup detection.
-# Do NOT use uvicorn.run() — it bypasses Gradio's GPU allocation system.
-demo.launch(server_name="0.0.0.0", server_port=7860)
+demo.launch(server_name="0.0.0.0", server_port=7860, share=False)
