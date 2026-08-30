@@ -14,7 +14,7 @@ const ALERT_KIND_LABELS = {
   breach_expired: { label: 'EXPIRED', className: 'breach', icon: ShieldAlert },
 };
 
-const SCAN_INTERVAL_MS = 100;
+const SCAN_INTERVAL_MS = 400;
 
 export default function DetectionPage() {
   const videoRef = useRef(null);

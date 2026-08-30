@@ -276,7 +276,7 @@ async def detect_plate(
 
 
 @router.post("/scan-frame", summary="Fast vehicle and plate bounds detection")
-@limiter.limit("200/minute")
+@limiter.limit("1000/minute")
 async def scan_frame_endpoint(
     request: Request,
     file: UploadFile = File(...),
@@ -302,7 +302,7 @@ async def scan_frame_endpoint(
 
 
 @router.post("/analyze-capture", summary="Deep analysis on a confirmed capture")
-@limiter.limit("10/minute")
+@limiter.limit("30/minute")
 async def analyze_capture_endpoint(
     request: Request,
     file: UploadFile = File(...),

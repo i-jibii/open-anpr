@@ -12,8 +12,8 @@
 import axios from 'axios';
 import { getSessionId } from './sessionStore';
 
-// The live backend URL on Hugging Face Spaces
-const API_BASE_URL = 'https://burn2179-open-anpr-api.hf.space/api/public';
+// Dynamic backend URL: Uses local proxy in development, Hugging Face in production
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? '/api/public' : 'https://burn2179-open-anpr-api.hf.space/api/public');
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -53,7 +53,7 @@ export const scanFrame = (blob) => {
   formData.append('file', blob, 'frame.jpg');
   return api.post('/scan-frame', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
-    timeout: 5000,
+    timeout: 15000,
   });
 };
 

@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import { getStats } from '../services/api';
 import { ClipboardList, Camera, BarChart3, ShieldCheck, Terminal, User, Briefcase, Mail, Sun, Wind, AlertTriangle } from 'lucide-react';
 import './HomePage.css';
 
@@ -36,7 +36,7 @@ export default function HomePage() {
   const [stats, setStats] = useState({ total_detections: 0, registered_vehicles: 0, anomalies: 0, blacklisted_hits: 0 });
 
   useEffect(() => {
-    axios.get('/api/public/stats', { headers: { 'X-Session-ID': localStorage.getItem('anpr_session_id') } })
+    getStats()
       .then(res => setStats(res.data))
       .catch(err => console.error("Stats error:", err));
   }, []);

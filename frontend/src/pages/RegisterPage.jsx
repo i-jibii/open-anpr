@@ -132,6 +132,8 @@ export default function RegisterPage() {
   const [vehicles, setVehicles] = useState([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(null); // { type: 'success'|'error', text: '' }
+  const [deleteTarget, setDeleteTarget] = useState(null); // { id, plate_number }
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     fetchVehicles();
@@ -214,13 +216,17 @@ export default function RegisterPage() {
     }
   };
 
-  const handleDelete = async (vehicleId, plateNumber) => {
-    if (!confirm(`Remove vehicle "${plateNumber}" from your session?`)) return;
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    setIsDeleting(true);
     try {
-      await deleteVehicle(vehicleId);
-      setVehicles((prev) => prev.filter((v) => v.id !== vehicleId));
+      await deleteVehicle(deleteTarget.id);
+      setVehicles((prev) => prev.filter((v) => v.id !== deleteTarget.id));
+      setDeleteTarget(null);
     } catch {
       alert('Could not delete vehicle. Please try again.');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -351,7 +357,7 @@ export default function RegisterPage() {
                   
                   <button
                     className="delete-btn"
-                    onClick={() => handleDelete(v.id, v.plate_number)}
+                    onClick={() => setDeleteTarget(v)}
                     title="Remove vehicle"
                   >
                     <Trash2 size={16} />
@@ -362,6 +368,43 @@ export default function RegisterPage() {
           </div>
         )}
       </div>
+
+      {/* Modern Confirmation Modal */}
+      {deleteTarget && (
+        <div className="modal-overlay" onClick={() => setDeleteTarget(null)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-icon-wrap">
+              <Trash2 size={24} />
+            </div>
+            <h3 className="modal-title">Remove Vehicle?</h3>
+            <p className="modal-description">
+              Are you sure you want to remove <span className="modal-plate-highlight">{deleteTarget.plate_number}</span> from your session's registry?
+            </p>
+            <div className="modal-actions">
+              <button 
+                type="button" 
+                className="btn-modal-cancel" 
+                onClick={() => setDeleteTarget(null)}
+                disabled={isDeleting}
+              >
+                Cancel
+              </button>
+              <button 
+                type="button" 
+                className="btn-modal-delete" 
+                onClick={confirmDelete}
+                disabled={isDeleting}
+              >
+                {isDeleting ? 'Deleting...' : (
+                  <>
+                    <Trash2 size={16} /> Remove
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
