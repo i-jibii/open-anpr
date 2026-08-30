@@ -19,3 +19,7 @@ with demo:
 # Mount the FastAPI app at the root, moving the dummy Gradio UI to /gradio
 # Hugging Face will automatically detect the 'app' variable and serve it.
 app = gr.mount_gradio_app(fastapi_app, demo, path="/gradio")
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=7860)
