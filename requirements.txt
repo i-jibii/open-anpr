@@ -1,9 +1,10 @@
 # OpenANPR Backend — Python Dependencies
-fastapi>=0.111.0
-uvicorn[standard]>=0.29.0
+fastapi>=0.111.0,<0.116.0
+starlette>=0.37.0,<0.42.0
+uvicorn[standard]>=0.29.0,<0.31.0
 sqlalchemy>=2.0.30
 psycopg2-binary>=2.9.9
-pydantic>=2.7.0
+pydantic>=2.7.0,<2.10.0
 pydantic-settings>=2.2.0
 python-dotenv>=1.0.0
 anyio>=4.3.0
