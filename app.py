@@ -31,9 +31,10 @@ with demo:
     out = gr.Textbox()
     btn.click(fn=_dummy_zero_gpu_bypass, inputs=[], outputs=[out])
 
-# Mount the FastAPI app at the root, moving the dummy Gradio UI to /gradio
-# Hugging Face will automatically detect the 'app' variable and serve it.
-app = gr.mount_gradio_app(fastapi_app, demo, path="/gradio")
+# Mount the FastAPI app at the root! This is CRITICAL because Hugging Face 
+# spaces heavily rely on pinging /config at the root of the app.
+# If Gradio is not at the root, Hugging Face assumes the server crashed and kills it!
+app = gr.mount_gradio_app(fastapi_app, demo, path="/")
 
 if __name__ == "__main__":
     import uvicorn
