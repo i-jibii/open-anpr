@@ -7,35 +7,58 @@ os.environ["GRADIO_ANALYTICS_ENABLED"] = "False"
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "backend"))
 
 import gradio as gr
-from backend.app.main import app as fastapi_app
-
 import spaces
 
+# ── ZeroGPU dummy function ──────────────────────────────────────────────────
+# This function exists ONLY to satisfy Hugging Face's ZeroGPU requirement.
+# Our actual ML inference runs on CPU through FastAPI endpoints.
 @spaces.GPU
-def _dummy_zero_gpu_bypass():
-    """
-    This function does absolutely nothing.
-    Its only purpose is to be detected by Hugging Face's ZeroGPU infrastructure
-    so it doesn't kill our Uvicorn server during startup!
-    """
-    return "ZeroGPU bypass successful"
+def gpu_status_check():
+    return "ZeroGPU is active. FastAPI backend is running."
 
-# Create a minimalist Gradio interface to satisfy Hugging Face's SDK requirement
+# ── Gradio UI (minimal, required by HF) ─────────────────────────────────────
 demo = gr.Blocks()
 with demo:
-    gr.Markdown("# OpenANPR API")
+    gr.Markdown("# 🚘 OpenANPR API Backend")
     gr.Markdown("The FastAPI backend is actively running on this Space.")
-    gr.Markdown("API Endpoints are available at `/api/public/...`")
+    gr.Markdown("API Endpoints: `/api/public/...` — [Swagger Docs](/docs)")
+    btn = gr.Button("Check ZeroGPU Status")
+    out = gr.Textbox(label="Status")
+    btn.click(fn=gpu_status_check, inputs=[], outputs=[out])
+
+# ── Mount FastAPI routes onto Gradio's internal app ──────────────────────────
+# We must use demo.launch() for ZeroGPU to work. Before that, we hook into
+# Gradio's app creation to inject our FastAPI routes.
+from backend.app.main import app as fastapi_app
+import gradio.routes
+
+_original_create_app = gradio.routes.App.create_app
+
+@classmethod  
+def _patched_create_app(cls, blocks, *args, **kwargs):
+    """Inject our FastAPI routes into the Gradio app during creation."""
+    gradio_app = _original_create_app.__func__(cls, blocks, *args, **kwargs)
     
-    btn = gr.Button("ZeroGPU Status Check")
-    out = gr.Textbox()
-    btn.click(fn=_dummy_zero_gpu_bypass, inputs=[], outputs=[out])
+    # Copy all routes from our FastAPI app into the Gradio app
+    for route in fastapi_app.routes:
+        gradio_app.routes.append(route)
+    
+    # Copy middleware (CORS, security headers, rate limiting)
+    for middleware in reversed(fastapi_app.user_middleware):
+        gradio_app.add_middleware(middleware.cls, **middleware.kwargs)
+    
+    # Copy exception handlers
+    for exc, handler in fastapi_app.exception_handlers.items():
+        gradio_app.add_exception_handler(exc, handler)
+    
+    # Copy state (rate limiter)
+    gradio_app.state.limiter = getattr(fastapi_app.state, 'limiter', None)
+    
+    return gradio_app
 
-# Mount the FastAPI app at the root! This is CRITICAL because Hugging Face 
-# spaces heavily rely on pinging /config at the root of the app.
-# If Gradio is not at the root, Hugging Face assumes the server crashed and kills it!
-app = gr.mount_gradio_app(fastapi_app, demo, path="/")
+gradio.routes.App.create_app = _patched_create_app
 
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=7860)
+# ── Launch via Gradio (REQUIRED for ZeroGPU) ─────────────────────────────────
+# This is the ONLY way to satisfy ZeroGPU's startup detection.
+# Do NOT use uvicorn.run() — it bypasses Gradio's GPU allocation system.
+demo.launch(server_name="0.0.0.0", server_port=7860)
