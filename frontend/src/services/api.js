@@ -12,9 +12,11 @@
 import axios from 'axios';
 import { getSessionId } from './sessionStore';
 
-// Since Vite proxies /api, we can just use a relative path
+// The live backend URL on Hugging Face Spaces
+const API_BASE_URL = 'https://burn2179-open-anpr-api.hf.space/api/public';
+
 const api = axios.create({
-  baseURL: `/api/public`,
+  baseURL: API_BASE_URL,
   timeout: 30000,
 });
 
