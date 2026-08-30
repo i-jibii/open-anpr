@@ -4,14 +4,14 @@ import { CheckCircle2, Ban, Clock, Trash2, ArrowUpRight, ArrowDownLeft, ChevronD
 import './RegisterPage.css';
 
 const VEHICLE_TYPES = ['Car', 'Motorcycle', 'Van', 'Truck', 'Other'];
-const VEHICLE_STATUSES = ['Approved (Normal)', 'Blacklisted (Test breach)', 'Expired (Test breach)'];
+const VEHICLE_STATUSES = ['Approved (Normal)', 'Blacklisted (Test breach)'];
 
 const VEHICLE_BRANDS = [
   '', 'Alfa Romeo', 'Aston Martin', 'Audi', 'BMW', 'BYD', 'Brilliance', 'Bugatti', 'Changan', 'Chery', 'Chevrolet', 'Citroen', 'DS', 'Daewoo', 'Daihatsu', 'Dodge', 'Dongfeng', 'Fiat', 'Ford', 'GMC', 'Gac', 'Geely', 'Honda', 'Hyundai', 'Infiniti', 'Isuzu', 'JAC', 'Jaecoo', 'Jaguar', 'Jeep', 'Jetour', 'KIA', 'Lada', 'Lamborghini', 'Land Rover', 'Lexus', 'MG', 'Maxus', 'Mazda', 'Mercedes', 'Mini Cooper', 'Mitsubishi', 'Neta', 'Nissan', 'Omoda', 'Opel', 'Peugeot', 'Porsche', 'Proton', 'Renault', 'Scania', 'Seat', 'Skoda', 'Subaru', 'Suzuki', 'Tesla', 'Toyota', 'Vinfast', 'Volkswagen', 'Volvo'
 ];
 
 const VEHICLE_COLORS = [
-  'beige', 'black', 'blue', 'brown', 'gold', 'green', 'grey', 'orange', 'pink', 'purple', 'red', 'silver', 'tan', 'white', 'yellow'
+  '', 'Beige', 'Black', 'Blue', 'Brown', 'Gold', 'Green', 'Grey', 'Orange', 'Pink', 'Purple', 'Red', 'Silver', 'Tan', 'White', 'Yellow'
 ];
 
 const SearchableSelect = ({ options, value, onChange, placeholder, name, id, searchable = true }) => {
@@ -171,7 +171,7 @@ export default function RegisterPage() {
     }
     
     if (!VEHICLE_BRANDS.includes(editForm.brand)) return alert('Invalid Brand.');
-    if (!VEHICLE_COLORS.includes(editForm.color.toLowerCase()) && editForm.color !== '') return alert('Invalid Color.');
+    if (!VEHICLE_COLORS.includes(editForm.color) && editForm.color !== '') return alert('Invalid Color.');
     if (!VEHICLE_TYPES.includes(editForm.type)) return alert('Invalid Type.');
     if (!VEHICLE_STATUSES.includes(editForm.status)) return alert('Invalid Status.');
 
@@ -182,7 +182,7 @@ export default function RegisterPage() {
     const payload = {
       ...editForm,
       type: editForm.type.toLowerCase(),
-      color: editForm.color.toLowerCase(),
+      color: editForm.color,
       status: backendStatus
     };
 
@@ -233,8 +233,7 @@ export default function RegisterPage() {
       return;
     }
     
-    const colorLower = form.color.toLowerCase();
-    if (!VEHICLE_COLORS.includes(colorLower) && form.color !== '') {
+    if (!VEHICLE_COLORS.includes(form.color) && form.color !== '') {
       setMessage({ type: 'error', text: 'Please select a valid Color from the dropdown.' });
       return;
     }
@@ -258,7 +257,7 @@ export default function RegisterPage() {
     const payload = {
       ...form,
       type: form.type.toLowerCase(),
-      color: colorLower,
+      color: form.color,
       status: backendStatus
     };
 
@@ -499,6 +498,7 @@ export default function RegisterPage() {
                   id="edit_plate_number"
                   name="plate_number"
                   type="text"
+                  className="form-input"
                   placeholder="e.g. ABC1234"
                   value={editForm.plate_number}
                   onChange={handleEditChange}
@@ -507,54 +507,58 @@ export default function RegisterPage() {
                 />
               </div>
 
-              <div className="form-group">
-                <label htmlFor="edit_type">Vehicle Type *</label>
-                <SearchableSelect
-                  id="edit_type"
-                  name="type"
-                  options={VEHICLE_TYPES}
-                  value={editForm.type}
-                  onChange={handleEditChange}
-                  placeholder="Select Vehicle Type"
-                  searchable={false}
-                />
+              <div className="form-row">
+                <div className="form-group">
+                  <label htmlFor="edit_type">Vehicle Type *</label>
+                  <SearchableSelect
+                    id="edit_type"
+                    name="type"
+                    options={VEHICLE_TYPES}
+                    value={editForm.type}
+                    onChange={handleEditChange}
+                    placeholder="Select Vehicle Type"
+                    searchable={false}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="edit_brand">Brand</label>
+                  <SearchableSelect
+                    id="edit_brand"
+                    name="brand"
+                    options={VEHICLE_BRANDS}
+                    value={editForm.brand}
+                    onChange={handleEditChange}
+                    placeholder="-- Type or Select Brand --"
+                  />
+                </div>
               </div>
 
-              <div className="form-group">
-                <label htmlFor="edit_brand">Brand</label>
-                <SearchableSelect
-                  id="edit_brand"
-                  name="brand"
-                  options={VEHICLE_BRANDS}
-                  value={editForm.brand}
-                  onChange={handleEditChange}
-                  placeholder="-- Type or Select Brand --"
-                />
-              </div>
+              <div className="form-row">
+                <div className="form-group">
+                  <label htmlFor="edit_color">Color</label>
+                  <SearchableSelect
+                    id="edit_color"
+                    name="color"
+                    options={VEHICLE_COLORS}
+                    value={editForm.color}
+                    onChange={handleEditChange}
+                    placeholder="-- Type or Select Color --"
+                  />
+                </div>
 
-              <div className="form-group">
-                <label htmlFor="edit_color">Color</label>
-                <SearchableSelect
-                  id="edit_color"
-                  name="color"
-                  options={VEHICLE_COLORS}
-                  value={editForm.color}
-                  onChange={handleEditChange}
-                  placeholder="-- Type or Select Color --"
-                />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="edit_status">Status (For Demo Testing) *</label>
-                <SearchableSelect
-                  id="edit_status"
-                  name="status"
-                  options={VEHICLE_STATUSES}
-                  value={editForm.status}
-                  onChange={handleEditChange}
-                  placeholder="Select Status"
-                  searchable={false}
-                />
+                <div className="form-group">
+                  <label htmlFor="edit_status">Status (For Demo Testing) *</label>
+                  <SearchableSelect
+                    id="edit_status"
+                    name="status"
+                    options={VEHICLE_STATUSES}
+                    value={editForm.status}
+                    onChange={handleEditChange}
+                    placeholder="Select Status"
+                    searchable={false}
+                  />
+                </div>
               </div>
 
               <button 
