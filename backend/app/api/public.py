@@ -45,6 +45,9 @@ class RegisterRequest(BaseModel):
 class DetectRequest(BaseModel):
     plate: str = Field(..., min_length=1, max_length=40)
     confidence_score: Optional[float] = Field(default=None, ge=0, le=100)
+    detected_type: Optional[str] = None
+    detected_color: Optional[str] = None
+    detected_brand: Optional[str] = None
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -231,9 +234,9 @@ async def detect_plate(
         direction=direction,
         confidence_score=body.confidence_score,
         vehicle_id=vehicle.id if vehicle else None,
-        vehicle_brand=vehicle.brand if vehicle else None,
-        vehicle_color=vehicle.color if vehicle else None,
-        vehicle_type=vehicle.type.value if vehicle and vehicle.type else None,
+        vehicle_brand=vehicle.brand.title() if vehicle and vehicle.brand else (body.detected_brand.title() if body.detected_brand else None),
+        vehicle_color=vehicle.color.title() if vehicle and vehicle.color else (body.detected_color.title() if body.detected_color else None),
+        vehicle_type=vehicle.type.value.title() if vehicle and vehicle.type else (body.detected_type.title() if body.detected_type else None),
         is_violation=is_violation,
     )
     db.add(log)
@@ -331,7 +334,13 @@ async def analyze_capture_endpoint(
     # Build the classification result
     classification = None
     if plate_text:
-        detect_req = DetectRequest(plate=plate_text, confidence_score=confidence)
+        detect_req = DetectRequest(
+            plate=plate_text, 
+            confidence_score=confidence,
+            detected_type=analysis.get("vehicle_type"),
+            detected_color=analysis.get("vehicle_color"),
+            detected_brand=analysis.get("vehicle_brand")
+        )
         classification = await detect_plate(request, detect_req, db, session_id)
 
     return {
@@ -379,7 +388,13 @@ async def detect_image(
             "plate_display": "UNKNOWN"
         }
 
-    detect_req = DetectRequest(plate=plate_text, confidence_score=confidence)
+    detect_req = DetectRequest(
+        plate=plate_text, 
+        confidence_score=confidence,
+        detected_type=inference_res.get("vehicle_type"),
+        detected_color=inference_res.get("vehicle_color"),
+        detected_brand=inference_res.get("vehicle_brand")
+    )
     return await detect_plate(request, detect_req, db, session_id)
 
 
