@@ -19,7 +19,6 @@ const SCAN_INTERVAL_MS = 400;
 export default function DetectionPage() {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
-  const overlayCanvasRef = useRef(null);
   const streamRef = useRef(null);
   const scanLoopRef = useRef(null);
   const scanningRef = useRef(false);
@@ -113,88 +112,9 @@ export default function DetectionPage() {
     setIsFullscreen((prev) => !prev);
   }, []);
 
-  // ── Overlay Canvas Sizing ─────────────────────────────────────────────────
-  useEffect(() => {
-    const video = videoRef.current;
-    const overlay = overlayCanvasRef.current;
-    if (!video || !overlay) return;
 
-    const syncSize = () => {
-      const rect = video.getBoundingClientRect();
-      overlay.width = rect.width;
-      overlay.height = rect.height;
-    };
 
-    video.addEventListener('loadedmetadata', syncSize);
-    video.addEventListener('resize', syncSize);
-    window.addEventListener('resize', syncSize);
 
-    if (video.videoWidth > 0) syncSize();
-
-    return () => {
-      video.removeEventListener('loadedmetadata', syncSize);
-      video.removeEventListener('resize', syncSize);
-      window.removeEventListener('resize', syncSize);
-    };
-  }, [cameraActive]);
-
-  // ── Draw Bounding Boxes on Overlay ────────────────────────────────────────
-  useEffect(() => {
-    const overlay = overlayCanvasRef.current;
-    const video = videoRef.current;
-    if (!overlay || !video) return;
-
-    const ctx = overlay.getContext('2d');
-    ctx.clearRect(0, 0, overlay.width, overlay.height);
-
-    // Clear canvas if we are not actively scanning or tracking a vehicle
-    if (scanStatus !== 'scanning' && scanStatus !== 'vehicle_found') {
-      return;
-    }
-
-    const vw = video.videoWidth || 1;
-    const vh = video.videoHeight || 1;
-    const cw = overlay.width;
-    const ch = overlay.height;
-    const sx = cw / vw;
-    const sy = ch / vh;
-
-    if (vehicleBox) {
-      ctx.strokeStyle = 'rgba(0, 255, 255, 0.7)';
-      ctx.lineWidth = 1.5;
-      const x = vehicleBox.x1 * sx;
-      const y = vehicleBox.y1 * sy;
-      const w = (vehicleBox.x2 - vehicleBox.x1) * sx;
-      const h = (vehicleBox.y2 - vehicleBox.y1) * sy;
-      ctx.strokeRect(x, y, w, h);
-
-      const label = `${vehicleBox.label || 'Vehicle'} ${vehicleBox.conf}%`;
-      ctx.font = 'normal 12px Inter, system-ui, sans-serif';
-      const tm = ctx.measureText(label);
-      ctx.fillStyle = 'rgba(0, 255, 255, 0.8)';
-      ctx.fillRect(x, y - 20, tm.width + 10, 20);
-      ctx.fillStyle = '#040914';
-      ctx.fillText(label, x + 5, y - 5);
-    }
-
-    if (plateBox) {
-      ctx.strokeStyle = 'rgba(0, 255, 102, 0.7)';
-      ctx.lineWidth = 1.5;
-      const x = plateBox.x1 * sx;
-      const y = plateBox.y1 * sy;
-      const w = (plateBox.x2 - plateBox.x1) * sx;
-      const h = (plateBox.y2 - plateBox.y1) * sy;
-      ctx.strokeRect(x, y, w, h);
-
-      const pLabel = isAnalyzingRef.current ? `Analyzing...` : `Scanning Plate...`;
-      ctx.font = 'normal 11px Inter, system-ui, sans-serif';
-      const ptm = ctx.measureText(pLabel);
-      ctx.fillStyle = 'rgba(0, 255, 102, 0.8)';
-      ctx.fillRect(x, y - 20, ptm.width + 10, 20);
-      ctx.fillStyle = '#040914';
-      ctx.fillText(pLabel, x + 5, y - 6);
-    }
-  }, [plateBox, vehicleBox, autoScanActive, scanStatus]);
 
   // ── Grab a frame as Blob ──────────────────────────────────────────────────
   const grabFrame = useCallback(() => {
@@ -419,7 +339,6 @@ export default function DetectionPage() {
           <div className="video-container">
             <video ref={videoRef} autoPlay playsInline muted className="camera-feed" />
             <canvas ref={canvasRef} style={{ display: 'none' }} />
-            <canvas ref={overlayCanvasRef} className="overlay-canvas" />
 
             {cameraActive && (
               <div className={`scan-status-bar ${statusDisplay.pulse ? 'pulse' : ''}`} style={{ '--status-color': statusDisplay.color }}>
