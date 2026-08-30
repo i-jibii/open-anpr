@@ -1,3 +1,14 @@
+---
+title: Open ANPR API
+emoji: 🚘
+colorFrom: blue
+colorTo: indigo
+sdk: gradio
+sdk_version: 4.36.1
+app_file: app.py
+pinned: false
+---
+
 # OpenANPR — Portfolio Edition
 
 A public-facing, session-isolated ANPR (Automatic Number Plate Recognition) system built for portfolio demonstration.
