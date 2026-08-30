@@ -478,8 +478,6 @@ def get_session_stats(
     session_id: str = Depends(_get_session_id),
 ):
     from sqlalchemy import func
-    from datetime import datetime, timezone
-    now = datetime.now(timezone.utc)
 
     total_logs = db.query(SessionLog).filter(SessionLog.session_id == session_id).count()
 
@@ -505,8 +503,7 @@ def get_session_stats(
         db.query(SessionVehicle.plate_normalized)
         .filter(
             SessionVehicle.session_id == session_id,
-            SessionVehicle.is_blacklisted == False,
-            (SessionVehicle.expiry_date == None) | (SessionVehicle.expiry_date > now)
+            SessionVehicle.status == VehicleStatus.approved
         )
     )
 
