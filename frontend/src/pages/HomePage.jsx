@@ -119,12 +119,8 @@ export default function HomePage() {
             <p>Detection relies heavily on hardware. Blurry or low-resolution webcam feeds will severely reduce OCR accuracy.</p>
           </div>
           <div className="constraint-item">
-            <h4><Sun size={16} /> Lighting & Glare</h4>
-            <p>Extreme glare, reflections, or very low-light environments can obscure plate characteristics.</p>
-          </div>
-          <div className="constraint-item">
-            <h4><Wind size={16} /> Motion Blur</h4>
-            <p>Fast-moving vehicles require higher shutter speeds. Simulating fast motion with a webcam may cause unreadable blur.</p>
+            <h4><Sun size={16} /> Lighting & Motion</h4>
+            <p>Extreme glare, low-light environments, or motion blur from fast-moving vehicles can obscure plate characteristics and reduce readability.</p>
           </div>
           <div className="constraint-item">
             <h4><AlertTriangle size={16} /> Non-Standard Plates</h4>
