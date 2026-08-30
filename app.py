@@ -9,14 +9,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "backend"))
 import gradio as gr
 from backend.app.main import app as fastapi_app
 
-try:
-    import spaces
-except ImportError:
-    class _MockSpaces:
-        def GPU(self, func=None, *args, **kwargs):
-            if func: return func
-            return lambda f: f
-    spaces = _MockSpaces()
+import spaces
 
 @spaces.GPU
 def _dummy_zero_gpu_bypass():
