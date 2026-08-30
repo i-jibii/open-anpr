@@ -12,7 +12,6 @@ Routes:
   GET  /api/public/vehicles    – Fetch this session's registered vehicles
   DELETE /api/public/vehicles/{id} – Remove a registered vehicle
 """
-from __future__ import annotations
 
 import uuid
 from datetime import datetime, timezone
