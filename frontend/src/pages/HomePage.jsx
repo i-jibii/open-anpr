@@ -33,7 +33,7 @@ const JobStreetIcon = () => (
 );
 
 export default function HomePage() {
-  const [stats, setStats] = useState({ total_detections: 0, registered_vehicles: 0, anomalies: 0, blacklisted_hits: 0 });
+  const [stats, setStats] = useState({ total_detections: 0, access_count: 0, anomaly_count: 0, breach_count: 0 });
 
   useEffect(() => {
     getStats()
@@ -64,21 +64,21 @@ export default function HomePage() {
       </div>
 
       <div className="home-stats">
-        <div className="stat-card access">
+        <div className="stat-card total">
           <div className="stat-value">{stats.total_detections}</div>
           <div className="stat-label">My Detections</div>
         </div>
-        <div className="stat-card">
-          <div className="stat-value">{stats.registered_vehicles}</div>
-          <div className="stat-label">Registered</div>
+        <div className="stat-card access">
+          <div className="stat-value">{stats.access_count}</div>
+          <div className="stat-label">Authorized</div>
         </div>
         <div className="stat-card anomaly">
-          <div className="stat-value">{stats.anomalies}</div>
+          <div className="stat-value">{stats.anomaly_count}</div>
           <div className="stat-label">Anomalies</div>
         </div>
-        <div className="stat-card anomaly">
-          <div className="stat-value">{stats.blacklisted_hits}</div>
-          <div className="stat-label">Blacklisted Hits</div>
+        <div className="stat-card breach">
+          <div className="stat-value">{stats.breach_count}</div>
+          <div className="stat-label">Breaches</div>
         </div>
       </div>
 

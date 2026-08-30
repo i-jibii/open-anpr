@@ -121,8 +121,10 @@
   border-color: var(--border-hover);
 }
 
+.stat-card.total { border-left: 3px solid var(--accent); }
 .stat-card.access { border-left: 3px solid var(--green); }
-.stat-card.anomaly { border-left: 3px solid var(--red); }
+.stat-card.anomaly { border-left: 3px solid var(--yellow); }
+.stat-card.breach { border-left: 3px solid var(--red); }
 
 .stat-value {
   font-size: 1.8rem;
