@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+.env
+
+# Database
+*.sqlite3
+*.db
+backend/openanpr.db
+backend/app/openanpr.db
+
+# Node
+node_modules/
+dist/
+npm-debug.log*
+
+# Models & Weights
+*.pt
+*.onnx
+runs/
+yolov8n.pt
+
+# OS & Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

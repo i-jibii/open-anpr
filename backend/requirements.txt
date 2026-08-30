@@ -1,0 +1,15 @@
+# OpenANPR Backend — Python Dependencies
+fastapi>=0.111.0
+uvicorn[standard]>=0.29.0
+sqlalchemy>=2.0.30
+psycopg2-binary>=2.9.9
+pydantic>=2.7.0
+pydantic-settings>=2.2.0
+python-dotenv>=1.0.0
+anyio>=4.3.0
+python-multipart>=0.0.9
+ultralytics>=8.2.0
+paddlepaddle>=2.6.0
+paddleocr>=2.7.3
+opencv-python-headless>=4.9.0
+slowapi>=0.1.9
