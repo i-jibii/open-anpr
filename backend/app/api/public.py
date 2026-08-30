@@ -477,41 +477,52 @@ def get_session_stats(
     db: Session = Depends(get_db),
     session_id: str = Depends(_get_session_id),
 ):
-    """Quick stats for the session dashboard."""
-    total_vehicles = db.query(SessionVehicle).filter(SessionVehicle.session_id == session_id).count()
+    from sqlalchemy import func
+    from datetime import datetime, timezone
+    now = datetime.now(timezone.utc)
+
     total_logs = db.query(SessionLog).filter(SessionLog.session_id == session_id).count()
-    access_count = (
-        db.query(SessionLog)
-        .filter(SessionLog.session_id == session_id, SessionLog.alert_kind == AlertKind.access)
-        .count()
-    )
-    anomaly_count = (
-        db.query(SessionLog)
-        .filter(
-            SessionLog.session_id == session_id,
-            SessionLog.alert_kind.in_([AlertKind.anomaly_unregistered, AlertKind.anomaly_low_confidence]),
-        )
-        .count()
-    )
-    breach_count = (
-        db.query(SessionLog)
-        .filter(
-            SessionLog.session_id == session_id,
-            SessionLog.alert_kind.in_([AlertKind.breach_blacklisted, AlertKind.breach_expired]),
-        )
-        .count()
-    )
+
     on_premises = (
         db.query(SessionVehicle)
         .filter(SessionVehicle.session_id == session_id, SessionVehicle.is_on_premises == True)
         .count()
     )
 
+    registered_plates_subquery = db.query(SessionVehicle.plate_normalized).filter(SessionVehicle.session_id == session_id)
+    
+    anomaly_count = (
+        db.query(func.count(func.distinct(SessionLog.plate_normalized)))
+        .filter(
+            SessionLog.session_id == session_id,
+            SessionLog.alert_kind.in_([AlertKind.anomaly_unregistered, AlertKind.anomaly_low_confidence]),
+            ~SessionLog.plate_normalized.in_(registered_plates_subquery)
+        )
+        .scalar() or 0
+    )
+
+    valid_plates_subquery = (
+        db.query(SessionVehicle.plate_normalized)
+        .filter(
+            SessionVehicle.session_id == session_id,
+            SessionVehicle.is_blacklisted == False,
+            (SessionVehicle.expiry_date == None) | (SessionVehicle.expiry_date > now)
+        )
+    )
+
+    breach_count = (
+        db.query(func.count(func.distinct(SessionLog.plate_normalized)))
+        .filter(
+            SessionLog.session_id == session_id,
+            SessionLog.alert_kind.in_([AlertKind.breach_blacklisted, AlertKind.breach_expired]),
+            ~SessionLog.plate_normalized.in_(valid_plates_subquery)
+        )
+        .scalar() or 0
+    )
+
     return {
-        "total_vehicles": total_vehicles,
         "total_detections": total_logs,
-        "access_count": access_count,
+        "access_count": on_premises,
         "anomaly_count": anomaly_count,
         "breach_count": breach_count,
-        "on_premises": on_premises,
     }
