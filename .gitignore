@@ -28,3 +28,8 @@ yolov8n.pt
 Thumbs.db
 .vscode/
 .idea/
+
+# Local-only Dev/Docs
+PROJECT_CONTEXT.md
+smart_anpr_architecture.md
+run.bat
