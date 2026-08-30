@@ -87,7 +87,7 @@ def get_ocr_model():
         from paddleocr import PaddleOCR
         # Removed show_log=False as it was causing an "Unknown argument" crash
         # Disabled mkldnn to bypass a known OneDNN bug in PaddlePaddle 3.3+
-        _ocr_model = PaddleOCR(use_angle_cls=True, lang="en", enable_mkldnn=False, use_gpu=False)
+        _ocr_model = PaddleOCR(use_angle_cls=True, lang="en", enable_mkldnn=False)
         logger.info("PaddleOCR loaded")
     return _ocr_model
 
