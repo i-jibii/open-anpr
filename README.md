@@ -25,6 +25,13 @@ Experience the system live directly in your browser (Desktop or Mobile):
 
 ---
 
+## 📌 Project Background & Leadership
+* **Capstone Roots:** Originally conceptualized and built as a university campus ANPR (Automated Number Plate Recognition) system by a capstone engineering team to automate vehicle verification and entry logging.
+* **Role:** **Lead Developer** — Engineered the core ANPR detection pipeline, OCR character recognition, license plate classification logic, and system architecture.
+* **Portfolio Edition (`OpenANPR`):** Refactored from the original campus codebase into a decoupled, stateless, and cloud-native architecture to allow seamless public demonstration without requiring private campus infrastructure or hardware authentication.
+
+---
+
 ## 🏗️ System Architecture
 
 OpenANPR was engineered to transition a heavy machine-learning workload from a local environment to a completely serverless, stateless cloud architecture. 
