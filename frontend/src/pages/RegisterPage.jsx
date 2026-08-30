@@ -490,7 +490,7 @@ export default function RegisterPage() {
               </button>
             </div>
             
-            <form className="register-form" onSubmit={handleEditSubmit} style={{ marginTop: '20px' }}>
+            <form className="register-form" onSubmit={handleEditSubmit} style={{ marginTop: '15px' }}>
               <div className="form-group">
                 <label htmlFor="edit_plate_number">Plate Number *</label>
                 <input

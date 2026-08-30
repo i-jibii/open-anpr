@@ -485,8 +485,8 @@
    ══════════════════════════════════════════════════════════════════════════════ */
 .edit-modal-card {
   text-align: left;
-  max-width: 500px;
-  padding: 2rem;
+  max-width: 600px;
+  padding: 1.75rem 2rem;
 }
 
 .modal-header {
@@ -494,7 +494,7 @@
   justify-content: space-between;
   align-items: center;
   border-bottom: 1px solid var(--border);
-  padding-bottom: 1rem;
+  padding-bottom: 0.75rem;
 }
 
 .modal-header .modal-title {
