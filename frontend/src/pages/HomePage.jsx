@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { getStats } from '../services/api';
-import { ClipboardList, Camera, BarChart3, ShieldCheck, Terminal, User, Briefcase, Mail, Sun, Wind, AlertTriangle } from 'lucide-react';
+import { ClipboardList, Camera, BarChart3, ShieldCheck, Terminal, User, Briefcase, Mail, Sun, Wind, AlertTriangle, ListOrdered } from 'lucide-react';
 import './HomePage.css';
 
 const GithubIcon = () => (
@@ -129,6 +129,10 @@ export default function HomePage() {
           <div className="constraint-item">
             <h4><AlertTriangle size={16} /> Non-Standard Plates</h4>
             <p>Heavily customized vanity plates or damaged plates may fall outside the standard alphanumeric detection threshold.</p>
+          </div>
+          <div className="constraint-item">
+            <h4><ListOrdered size={16} /> Single-File Processing</h4>
+            <p>Designed for one vehicle at a time in a queue fashion (e.g., single lane entry/exit). If multiple cars enter side-by-side, they will be processed sequentially.</p>
           </div>
         </div>
       </div>

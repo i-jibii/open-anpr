@@ -575,6 +575,7 @@ export default function DetectionPage() {
                 <li><strong>Camera Quality:</strong> Blurry or low-resolution webcams will reduce text clarity.</li>
                 <li><strong>Lighting:</strong> Avoid heavy glare, reflections, or very dark environments.</li>
                 <li><strong>Motion Blur:</strong> Simulating fast motion with a webcam requires high shutter speeds to avoid blur.</li>
+                <li><strong>Single-File Processing:</strong> Designed for one vehicle at a time in a queue fashion (e.g., single lane entry/exit). Multiple cars side-by-side will be processed sequentially.</li>
                 <li><strong>Standard Formats:</strong> The system enforces alphanumeric mixture rules; purely text banners will be ignored.</li>
               </ul>
             </div>
