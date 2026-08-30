@@ -18,16 +18,6 @@ from typing import Optional
 import numpy as np
 import cv2
 
-try:
-    import spaces
-except ImportError:
-    # Fallback for local development if spaces isn't installed
-    class _MockSpaces:
-        def GPU(self, func=None, *args, **kwargs):
-            if func: return func
-            return lambda f: f
-    spaces = _MockSpaces()
-
 logger = logging.getLogger(__name__)
 
 # ── Lazy-loaded model singletons ──────────────────────────────────────────────
@@ -151,7 +141,6 @@ def _best_box(results, conf_threshold: float = 0.35):
 # STEP 1: FAST SCAN — called every ~500ms from the frontend auto-scan loop
 # ══════════════════════════════════════════════════════════════════════════════
 
-@spaces.GPU
 def scan_frame(image_bytes: bytes) -> dict:
     """
     Fast scan: runs Vehicle YOLO → Plate YOLO on a single frame.
@@ -215,7 +204,6 @@ def scan_frame(image_bytes: bytes) -> dict:
 # STEP 2: DEEP ANALYSIS — called ONCE after capture_ready triggers
 # ══════════════════════════════════════════════════════════════════════════════
 
-@spaces.GPU
 def analyze_capture(image_bytes: bytes) -> dict:
     """
     Full deep analysis on a confirmed capture frame:

@@ -26,7 +26,6 @@ from app.models.session_log import AlertKind, EntryDirection, SessionLog
 from app.models.session_vehicle import SessionVehicle, VehicleStatus, VehicleType
 from app.services.alerts_ws import alerts_ws_manager
 from app.services.anpr_lookup import COOLDOWN_SECONDS, classify_plate
-from app.services.inference import scan_frame, analyze_capture, analyze_image
 from app.utils.database import get_db
 from app.utils.plates import format_plate_display, normalize_plate_key
 from app.utils.rate_limit import limiter
@@ -288,6 +287,7 @@ async def scan_frame_endpoint(
     Does NOT run OCR or any slow models.
     No session ID required — this is a stateless detection-only call.
     """
+    from app.services.inference import scan_frame
     image_bytes = await file.read()
 
     try:
@@ -316,6 +316,7 @@ async def analyze_capture_endpoint(
     Runs: Vehicle Type → Plate OCR → Color → Brand → Annotated Preview.
     Then classifies the plate against the session's registered vehicles.
     """
+    from app.services.inference import analyze_capture
     image_bytes = await file.read()
 
     try:
@@ -357,6 +358,7 @@ async def detect_image(
     """
     Legacy endpoint: Process an image using YOLO/OCR to find a plate, then classify it.
     """
+    from app.services.inference import analyze_image
     image_bytes = await file.read()
 
     try:

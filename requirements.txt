@@ -13,6 +13,3 @@ paddlepaddle>=2.6.0
 paddleocr>=2.7.3
 opencv-python-headless>=4.9.0
 slowapi>=0.1.9
-huggingface-hub<0.25.0
-gradio==4.44.1
-spaces>=0.25.0
