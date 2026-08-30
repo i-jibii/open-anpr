@@ -19,6 +19,7 @@ npm-debug.log*
 
 # Models & Weights
 *.pt
+!backend/app/models/weights/*.pt
 *.onnx
 runs/
 yolov8n.pt

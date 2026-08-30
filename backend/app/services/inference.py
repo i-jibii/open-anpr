@@ -87,7 +87,7 @@ def get_ocr_model():
         from paddleocr import PaddleOCR
         # Removed show_log=False as it was causing an "Unknown argument" crash
         # Disabled mkldnn to bypass a known OneDNN bug in PaddlePaddle 3.3+
-        _ocr_model = PaddleOCR(use_angle_cls=True, lang="en", enable_mkldnn=False)
+        _ocr_model = PaddleOCR(use_angle_cls=True, lang="en", enable_mkldnn=False, use_gpu=False)
         logger.info("PaddleOCR loaded")
     return _ocr_model
 
@@ -166,7 +166,7 @@ def scan_frame(image_bytes: bytes) -> dict:
 
     # ── 1. Vehicle detection ──────────────────────────────────────────────────
     vehicle_model = get_vehicle_model()
-    v_results = vehicle_model(img, conf=0.35, verbose=False)
+    v_results = vehicle_model(img, conf=0.35, verbose=False, device="cpu")
     v_box = _best_box(v_results, 0.35)
 
     if v_box is None:
@@ -182,7 +182,7 @@ def scan_frame(image_bytes: bytes) -> dict:
 
     # ── 2. Plate detection ────────────────────────────────────────────────────
     plate_model = get_plate_model()
-    p_results = plate_model(img, conf=0.40, verbose=False)
+    p_results = plate_model(img, conf=0.40, verbose=False, device="cpu")
     p_box = _best_box(p_results, 0.40)
 
     if p_box is None:
@@ -231,7 +231,7 @@ def analyze_capture(image_bytes: bytes) -> dict:
 
     # ── 1. Vehicle detection ──────────────────────────────────────────────────
     vehicle_model = get_vehicle_model()
-    v_results = vehicle_model(img, conf=0.35, verbose=False)
+    v_results = vehicle_model(img, conf=0.35, verbose=False, device="cpu")
     v_box = _best_box(v_results, 0.35)
 
     if v_box:
@@ -241,7 +241,7 @@ def analyze_capture(image_bytes: bytes) -> dict:
 
     # ── 2. Plate detection + OCR ──────────────────────────────────────────────
     plate_model = get_plate_model()
-    p_results = plate_model(img, conf=0.40, verbose=False)
+    p_results = plate_model(img, conf=0.40, verbose=False, device="cpu")
     p_box = _best_box(p_results, 0.40)
 
     if p_box:
@@ -337,7 +337,7 @@ def analyze_capture(image_bytes: bytes) -> dict:
             if c_crop is not None:
                 crop_img = c_crop
                 
-        c_results = color_model(crop_img, verbose=False)
+        c_results = color_model(crop_img, verbose=False, device="cpu")
         c_probs = c_results[0].probs
         if c_probs is not None and c_probs.top1conf.item() >= 0.30:
             out["vehicle_color"] = c_results[0].names[c_probs.top1].capitalize()
@@ -347,7 +347,7 @@ def analyze_capture(image_bytes: bytes) -> dict:
     # ── 4. Brand detection ────────────────────────────────────────────────────
     try:
         brand_model = get_brand_model()
-        b_results = brand_model(img, conf=0.30, verbose=False)
+        b_results = brand_model(img, conf=0.30, verbose=False, device="cpu")
         b_box = _best_box(b_results, 0.30)
         if b_box:
             bx1, by1, bx2, by2, b_conf, b_label = b_box

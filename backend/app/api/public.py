@@ -287,10 +287,11 @@ async def scan_frame_endpoint(
     No session ID required — this is a stateless detection-only call.
     """
     from app.services.inference import scan_frame
+    from starlette.concurrency import run_in_threadpool
     image_bytes = await file.read()
 
     try:
-        return scan_frame(image_bytes)
+        return await run_in_threadpool(scan_frame, image_bytes)
     except Exception as e:
         return {
             "vehicle_detected": False,
@@ -316,10 +317,11 @@ async def analyze_capture_endpoint(
     Then classifies the plate against the session's registered vehicles.
     """
     from app.services.inference import analyze_capture
+    from starlette.concurrency import run_in_threadpool
     image_bytes = await file.read()
 
     try:
-        analysis = analyze_capture(image_bytes)
+        analysis = await run_in_threadpool(analyze_capture, image_bytes)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -358,10 +360,11 @@ async def detect_image(
     Legacy endpoint: Process an image using YOLO/OCR to find a plate, then classify it.
     """
     from app.services.inference import analyze_image
+    from starlette.concurrency import run_in_threadpool
     image_bytes = await file.read()
 
     try:
-        inference_res = analyze_image(image_bytes)
+        inference_res = await run_in_threadpool(analyze_image, image_bytes)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
