@@ -143,14 +143,13 @@ export default function RegisterPage() {
     
     // Map backend enums back to dropdown options
     let statusLabel = 'Approved (Normal)';
-    if (v.status === 'blacklisted') statusLabel = 'Blacklisted (Test breach)';
-    if (v.status === 'expired') statusLabel = 'Expired (Test breach)';
+    if (v.status === 'blacklisted' || v.status === 'expired') statusLabel = 'Blacklisted (Test breach)';
     
     setEditForm({
       plate_number: v.plate_number,
       type: v.type.charAt(0).toUpperCase() + v.type.slice(1),
-      brand: v.brand || '',
-      color: v.color || '',
+      brand: v.brand ? v.brand.charAt(0).toUpperCase() + v.brand.slice(1) : '',
+      color: v.color ? v.color.charAt(0).toUpperCase() + v.color.slice(1) : '',
       status: statusLabel,
     });
   };
@@ -359,7 +358,7 @@ export default function RegisterPage() {
             </div>
 
             <div className="form-group">
-              <label htmlFor="status">Status (For Demo Testing) *</label>
+              <label htmlFor="status">Status *</label>
               <SearchableSelect
                 options={VEHICLE_STATUSES}
                 id="status"
@@ -522,7 +521,7 @@ export default function RegisterPage() {
                 </div>
 
                 <div className="form-group">
-                  <label htmlFor="edit_brand">Brand</label>
+                  <label htmlFor="edit_brand">Brand *</label>
                   <SearchableSelect
                     id="edit_brand"
                     name="brand"
@@ -536,7 +535,7 @@ export default function RegisterPage() {
 
               <div className="form-row">
                 <div className="form-group">
-                  <label htmlFor="edit_color">Color</label>
+                  <label htmlFor="edit_color">Color *</label>
                   <SearchableSelect
                     id="edit_color"
                     name="color"
@@ -548,7 +547,7 @@ export default function RegisterPage() {
                 </div>
 
                 <div className="form-group">
-                  <label htmlFor="edit_status">Status (For Demo Testing) *</label>
+                  <label htmlFor="edit_status">Status *</label>
                   <SearchableSelect
                     id="edit_status"
                     name="status"
