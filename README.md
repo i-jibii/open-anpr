@@ -71,14 +71,16 @@ Hosting an AI pipeline (YOLO + PaddleOCR) for free on the internet requires a di
 
 ## 🚀 Key Features
 
-1. **Real-time Plate Scanning:** Uses the browser's native `navigator.mediaDevices` API to capture high-resolution frames from desktop webcams or mobile rear cameras.
-2. **Cascaded AI Pipeline:** 
-    * Captures raw base64 frame.
-    * Backend decodes to OpenCV format and applies preprocessing (brightness balancing, noise reduction).
-    * PaddleOCR runs inference to extract textual data with confidence scoring.
-    * Text is scrubbed using regex rules specifically tuned to standard license plate formats.
-3. **Database Lookups:** The system cross-references the extracted plate against the user's specific `session_vehicles` table to determine Authorization Status (Approved, Blacklisted, Expired).
-4. **Historical Logging:** Every scan is recorded in `session_logs` complete with a timestamp, confidence score, and cropped image, viewable in the UI.
+1. **Dynamic Detection Zones (ROI):** 
+    * Users can interactively draw custom polygon zones directly on the camera feed to mask out background noise and focus purely on a specific entry/exit lane. 
+    * The UI calculates resolution-independent coordinates and sends them securely to the backend, which applies an OpenCV `fillPoly` mask before running AI inference.
+2. **Real-time Plate Scanning:** Uses the browser's native `navigator.mediaDevices` API to capture high-resolution frames from desktop webcams or mobile rear cameras.
+3. **Advanced AI & Classification Pipeline:** 
+    * **Vehicle Detection:** Uses YOLO/CNN models to detect the presence of a vehicle in the frame before attempting expensive OCR.
+    * **Deep Analysis:** Once a vehicle is locked, secondary models classify the **Vehicle Type, Color, and Brand**.
+    * **OCR Extraction:** PaddleOCR runs inference to extract textual data, which is scrubbed using regex rules specifically tuned to standard license plate formats.
+4. **Database Lookups:** The system cross-references the extracted plate against the user's specific `session_vehicles` table to determine Authorization Status (Approved, Blacklisted, Expired).
+5. **Historical Logging:** Every scan is recorded in `session_logs` complete with a timestamp, confidence score, and high-fidelity annotated image, viewable in the UI.
 
 ---
 
