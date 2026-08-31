@@ -137,11 +137,28 @@ def _best_box(results, conf_threshold: float = 0.35):
     return x1, y1, x2, y2, conf, cls_name
 
 
+def _apply_zone_mask(img: np.ndarray, zone_points: list) -> np.ndarray:
+    """Masks out everything outside the provided polygon (zone_points)."""
+    if not zone_points or len(zone_points) < 3:
+        return img
+    
+    h, w = img.shape[:2]
+    pts = []
+    for p in zone_points:
+        px = int(p.get("x", 0) * w)
+        py = int(p.get("y", 0) * h)
+        pts.append([px, py])
+        
+    pts = np.array([pts], dtype=np.int32)
+    mask = np.zeros((h, w), dtype=np.uint8)
+    cv2.fillPoly(mask, pts, 255)
+    return cv2.bitwise_and(img, img, mask=mask)
+
 # ══════════════════════════════════════════════════════════════════════════════
 # STEP 1: FAST SCAN — called every ~500ms from the frontend auto-scan loop
 # ══════════════════════════════════════════════════════════════════════════════
 
-def scan_frame(image_bytes: bytes) -> dict:
+def scan_frame(image_bytes: bytes, zone_points: list = None) -> dict:
     """
     Fast scan: runs Vehicle YOLO → Plate YOLO on a single frame.
 
@@ -153,6 +170,9 @@ def scan_frame(image_bytes: bytes) -> dict:
     """
     img = _bytes_to_cv2(image_bytes)
     h, w = img.shape[:2]
+    
+    # Apply Detection Zone Mask if provided (use masked image for detection)
+    masked_img = _apply_zone_mask(img, zone_points)
 
     result = {
         "vehicle_detected": False,
@@ -166,7 +186,7 @@ def scan_frame(image_bytes: bytes) -> dict:
 
     # ── 1. Vehicle detection ──────────────────────────────────────────────────
     vehicle_model = get_vehicle_model()
-    v_results = vehicle_model(img, conf=0.35, verbose=False, device="cpu")
+    v_results = vehicle_model(masked_img, conf=0.35, verbose=False, device="cpu")
     v_box = _best_box(v_results, 0.35)
 
     if v_box is None:
@@ -182,7 +202,7 @@ def scan_frame(image_bytes: bytes) -> dict:
 
     # ── 2. Plate detection ────────────────────────────────────────────────────
     plate_model = get_plate_model()
-    p_results = plate_model(img, conf=0.40, verbose=False, device="cpu")
+    p_results = plate_model(masked_img, conf=0.40, verbose=False, device="cpu")
     p_box = _best_box(p_results, 0.40)
 
     if p_box is None:
@@ -204,7 +224,7 @@ def scan_frame(image_bytes: bytes) -> dict:
 # STEP 2: DEEP ANALYSIS — called ONCE after capture_ready triggers
 # ══════════════════════════════════════════════════════════════════════════════
 
-def analyze_capture(image_bytes: bytes) -> dict:
+def analyze_capture(image_bytes: bytes, zone_points: list = None) -> dict:
     """
     Full deep analysis on a confirmed capture frame:
       1. Vehicle type  (YOLO)
@@ -217,6 +237,9 @@ def analyze_capture(image_bytes: bytes) -> dict:
     """
     img = _bytes_to_cv2(image_bytes)
     h, w = img.shape[:2]
+
+    # Apply Detection Zone Mask if provided (use masked image for detection)
+    masked_img = _apply_zone_mask(img, zone_points)
 
     out = {
         "plate": "",
@@ -231,7 +254,7 @@ def analyze_capture(image_bytes: bytes) -> dict:
 
     # ── 1. Vehicle detection ──────────────────────────────────────────────────
     vehicle_model = get_vehicle_model()
-    v_results = vehicle_model(img, conf=0.35, verbose=False, device="cpu")
+    v_results = vehicle_model(masked_img, conf=0.35, verbose=False, device="cpu")
     v_box = _best_box(v_results, 0.35)
 
     if v_box:
@@ -241,7 +264,7 @@ def analyze_capture(image_bytes: bytes) -> dict:
 
     # ── 2. Plate detection + OCR ──────────────────────────────────────────────
     plate_model = get_plate_model()
-    p_results = plate_model(img, conf=0.40, verbose=False, device="cpu")
+    p_results = plate_model(masked_img, conf=0.40, verbose=False, device="cpu")
     p_box = _best_box(p_results, 0.40)
 
     if p_box:
@@ -347,7 +370,7 @@ def analyze_capture(image_bytes: bytes) -> dict:
     # ── 4. Brand detection ────────────────────────────────────────────────────
     try:
         brand_model = get_brand_model()
-        b_results = brand_model(img, conf=0.30, verbose=False, device="cpu")
+        b_results = brand_model(masked_img, conf=0.30, verbose=False, device="cpu")
         b_box = _best_box(b_results, 0.30)
         if b_box:
             bx1, by1, bx2, by2, b_conf, b_label = b_box

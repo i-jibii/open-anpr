@@ -2,7 +2,8 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { detectPlate, scanFrame, analyzeCapture } from '../services/api';
 import { 
   CheckCircle2, AlertTriangle, ShieldAlert, Camera, Square, RefreshCw, X, 
-  Maximize, Play, Search, Loader2, Circle, ArrowDownLeft, ArrowUpRight, Info 
+  Maximize, Play, Search, Loader2, Circle, ArrowDownLeft, ArrowUpRight, Info,
+  PenTool, Undo2, Trash2, Check
 } from 'lucide-react';
 import './DetectionPage.css';
 
@@ -30,6 +31,13 @@ export default function DetectionPage() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
   const cameraPanelRef = useRef(null);
+  const videoContainerRef = useRef(null);
+
+  // Detection Zone state
+  const [detectionZone, setDetectionZone] = useState([]);
+  const [isDrawingZone, setIsDrawingZone] = useState(false);
+  const detectionZoneRef = useRef([]);
+  useEffect(() => { detectionZoneRef.current = detectionZone; }, [detectionZone]);
 
   // Auto-scan state
   const [autoScanActive, setAutoScanActive] = useState(false);
@@ -83,6 +91,13 @@ export default function DetectionPage() {
       setCameraActive(false);
     }
   }, [facingMode]);
+  const stopAutoScan = useCallback(() => {
+    scanningRef.current = false;
+    setAutoScanActive(false);
+    setScanStatus('idle');
+    setVehicleBox(null);
+    setPlateBox(null);
+  }, []);
 
   const stopCamera = useCallback(() => {
     if (streamRef.current) {
@@ -93,8 +108,10 @@ export default function DetectionPage() {
       videoRef.current.srcObject = null;
     }
     setCameraActive(false);
+    setIsDrawingZone(false);
+    setDetectionZone([]);
     stopAutoScan();
-  }, []);
+  }, [stopAutoScan]);
 
   const toggleFacing = useCallback(() => {
     const newMode = facingMode === 'environment' ? 'user' : 'environment';
@@ -112,9 +129,53 @@ export default function DetectionPage() {
     setIsFullscreen((prev) => !prev);
   }, []);
 
+  // ── Detection Zone Handlers ──────────────────────────────────────────────
+  const handleZoneClick = (e) => {
+    if (!isDrawingZone || !videoContainerRef.current) return;
+    
+    const rect = videoContainerRef.current.getBoundingClientRect();
+    let clientX, clientY;
+    
+    if (e.touches && e.touches.length > 0) {
+      clientX = e.touches[0].clientX;
+      clientY = e.touches[0].clientY;
+    } else {
+      clientX = e.clientX;
+      clientY = e.clientY;
+    }
 
+    // Boundary Clamping
+    const clamp = (val, min, max) => Math.max(min, Math.min(val, max));
+    const rawX = clientX - rect.left;
+    const rawY = clientY - rect.top;
 
+    const clampedX = clamp(rawX, 0, rect.width);
+    const clampedY = clamp(rawY, 0, rect.height);
 
+    const x = clampedX / rect.width;
+    const y = clampedY / rect.height;
+
+    // Auto-complete if clicking near the first point
+    if (detectionZone.length >= 3) {
+      const first = detectionZone[0];
+      const dist = Math.sqrt(Math.pow(first.x - x, 2) + Math.pow(first.y - y, 2));
+      // 0.05 is roughly 5% of the frame size
+      if (dist < 0.05) {
+        setIsDrawingZone(false);
+        return;
+      }
+    }
+
+    setDetectionZone(prev => [...prev, { x, y }]);
+  };
+
+  const handleUndoZone = () => {
+    setDetectionZone(prev => prev.slice(0, -1));
+  };
+
+  const handleClearZone = () => {
+    setDetectionZone([]);
+  };
 
   // ── Grab a frame as Blob ──────────────────────────────────────────────────
   const grabFrame = useCallback(() => {
@@ -149,7 +210,7 @@ export default function DetectionPage() {
         if (!blob || !scanningRef.current) break;
 
         try {
-          const res = await scanFrame(blob);
+          const res = await scanFrame(blob, detectionZoneRef.current);
           const data = res.data;
 
           if (!scanningRef.current) break;
@@ -189,14 +250,6 @@ export default function DetectionPage() {
     scanLoopRef.current = loop();
   }, [cameraActive, grabFrame]);
 
-  const stopAutoScan = useCallback(() => {
-    scanningRef.current = false;
-    setAutoScanActive(false);
-    setScanStatus('idle');
-    setVehicleBox(null);
-    setPlateBox(null);
-  }, []);
-
   // ── DEEP ANALYSIS ─────────────────────────────────────────────────────────
   const runDeepAnalysis = useCallback(async (blob) => {
     setScanStatus('analyzing');
@@ -221,7 +274,7 @@ export default function DetectionPage() {
         }, ms);
       });
 
-      const res = await analyzeCapture(blob);
+      const res = await analyzeCapture(blob, detectionZoneRef.current);
       const data = res.data;
 
       setAnalysisSteps((prev) => prev.map((s) => ({ ...s, status: 'done' })));
@@ -313,17 +366,47 @@ export default function DetectionPage() {
                   <button className="cam-btn danger" onClick={stopCamera} title="Stop Camera">
                     <Square size={14} /> Stop
                   </button>
-                  <button className="cam-btn secondary" onClick={toggleFacing} title="Flip Camera">
-                    <RefreshCw size={14} />
+                  {!isDrawingZone && (
+                    <>
+                      <button className="cam-btn secondary" onClick={toggleFacing} title="Flip Camera">
+                        <RefreshCw size={14} />
+                      </button>
+                      <button className="cam-btn secondary" onClick={toggleFullscreen} title="Toggle Fullscreen">
+                        {isFullscreen ? <X size={14} /> : <Maximize size={14} />}
+                      </button>
+                    </>
+                  )}
+                </>
+              )}
+              
+              {cameraActive && !isDrawingZone && (
+                <button 
+                  className={`cam-btn ${detectionZone.length > 0 ? 'primary' : 'secondary'}`} 
+                  onClick={() => { setIsDrawingZone(true); stopAutoScan(); }} 
+                  title="Set Detection Zone"
+                >
+                  <PenTool size={14} /> Zone
+                </button>
+              )}
+              {isDrawingZone && (
+                <>
+                  <button className="cam-btn secondary" onClick={handleUndoZone} title="Undo Point">
+                    <Undo2 size={14} /> Undo
                   </button>
-                  <button className="cam-btn secondary" onClick={toggleFullscreen} title="Toggle Fullscreen">
-                    {isFullscreen ? <X size={14} /> : <Maximize size={14} />}
+                  <button className="cam-btn danger" onClick={handleClearZone} title="Clear Zone">
+                    <Trash2 size={14} /> Clear
+                  </button>
+                  <button className="cam-btn primary" onClick={() => setIsDrawingZone(false)} title="Finish Drawing">
+                    <Check size={14} /> Done
                   </button>
                 </>
               )}
-              <button className="cam-btn secondary" onClick={() => setShowInfo(true)} title="Best Practices">
-                <Info size={14} />
-              </button>
+
+              {!isDrawingZone && (
+                <button className="cam-btn secondary" onClick={() => setShowInfo(true)} title="Best Practices">
+                  <Info size={14} />
+                </button>
+              )}
               
               {/* Lightweight Full Detection UI Overlay */}
               {(scanStatus === 'capturing' || scanStatus === 'analyzing') && (
@@ -336,12 +419,62 @@ export default function DetectionPage() {
             </div>
           </div>
 
-          <div className="video-container">
+          <div className="video-container" ref={videoContainerRef}>
             <video ref={videoRef} autoPlay playsInline muted className="camera-feed" />
             <canvas ref={canvasRef} style={{ display: 'none' }} />
 
-            {cameraActive && (
-              <div className={`scan-status-bar ${statusDisplay.pulse ? 'pulse' : ''}`} style={{ '--status-color': statusDisplay.color }}>
+            {/* Detection Zone Drawing SVG */}
+            {isDrawingZone && (
+              <div 
+                className="zone-drawing-overlay"
+                onClick={handleZoneClick}
+                onTouchStart={handleZoneClick}
+              >
+                <svg className="detection-zone-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+                  {detectionZone.length > 0 && (
+                    <polyline
+                      points={detectionZone.map(p => `${p.x * 100},${p.y * 100}`).join(' ')}
+                      className="detection-zone-polyline"
+                    />
+                  )}
+                  {detectionZone.length > 2 && (
+                    <line 
+                      x1={detectionZone[detectionZone.length-1].x * 100} y1={detectionZone[detectionZone.length-1].y * 100}
+                      x2={detectionZone[0].x * 100} y2={detectionZone[0].y * 100}
+                      className="detection-zone-polyline dashed"
+                    />
+                  )}
+                  {detectionZone.map((p, i) => (
+                    <circle 
+                      key={i} 
+                      cx={p.x * 100} cy={p.y * 100} 
+                      r={i === 0 ? "1.5" : "0.6"} 
+                      fill="var(--accent)"
+                      stroke="#fff"
+                      strokeWidth="0.3"
+                      className={`zone-point ${i === 0 ? 'pulse' : ''}`} 
+                    />
+                  ))}
+                </svg>
+                <div className="drawing-hint">Tap near the 1st point to complete the zone!</div>
+              </div>
+            )}
+            {cameraActive && !isDrawingZone && detectionZone.length > 2 && (
+              <svg className="detection-zone-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+                <path
+                  d={`M0,0 H100 V100 H0 Z M${detectionZone.map(p => `${p.x * 100},${p.y * 100}`).join(' ')} Z`}
+                  fill="rgba(0, 0, 0, 0.75)"
+                  fillRule="evenodd"
+                />
+                <polygon
+                  points={detectionZone.map(p => `${p.x * 100},${p.y * 100}`).join(' ')}
+                  className="detection-zone-polygon"
+                />
+              </svg>
+            )}
+
+            {!isDrawingZone && cameraActive && (
+              <div className={`scan-status-bar ${statusDisplay.pulse ? 'pulse' : ''}`} style={{ '--status-color': statusDisplay.color, position: 'relative', zIndex: 60 }}>
                 <span className="scan-status-dot" />
                 <span className="scan-status-text">{statusDisplay.text}</span>
               </div>

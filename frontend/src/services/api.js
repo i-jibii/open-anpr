@@ -48,9 +48,12 @@ export const detectPlateImage = (file) => {
  * Fast scan: sends a frame to the backend for vehicle + plate bounding box detection.
  * Returns in ~200ms. Does NOT run OCR.
  */
-export const scanFrame = (blob) => {
+export const scanFrame = (blob, zonePoints = null) => {
   const formData = new FormData();
   formData.append('file', blob, 'frame.jpg');
+  if (zonePoints && zonePoints.length >= 3) {
+    formData.append('zone_points', JSON.stringify(zonePoints));
+  }
   return api.post('/scan-frame', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
     timeout: 15000,
@@ -61,9 +64,12 @@ export const scanFrame = (blob) => {
  * Deep analysis: sends the confirmed capture frame for full processing
  * (OCR, color, brand, annotated preview). Takes 3-8 seconds on first call.
  */
-export const analyzeCapture = (blob) => {
+export const analyzeCapture = (blob, zonePoints = null) => {
   const formData = new FormData();
   formData.append('file', blob, 'capture.jpg');
+  if (zonePoints && zonePoints.length >= 3) {
+    formData.append('zone_points', JSON.stringify(zonePoints));
+  }
   return api.post('/analyze-capture', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
     timeout: 60000,

@@ -14,10 +14,11 @@ Routes:
 """
 
 import uuid
+import json
 from datetime import datetime, timezone
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Header, HTTPException, UploadFile, File, Request
+from fastapi import APIRouter, Depends, Header, HTTPException, UploadFile, File, Request, Form
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
@@ -282,6 +283,7 @@ async def detect_plate(
 async def scan_frame_endpoint(
     request: Request,
     file: UploadFile = File(...),
+    zone_points: Optional[str] = Form(None),
 ):
     """
     Fast frame scan for the auto-scan loop (~200ms).
@@ -292,9 +294,16 @@ async def scan_frame_endpoint(
     from app.services.inference import scan_frame
     from starlette.concurrency import run_in_threadpool
     image_bytes = await file.read()
+    
+    parsed_zone = None
+    if zone_points:
+        try:
+            parsed_zone = json.loads(zone_points)
+        except Exception as e:
+            pass
 
     try:
-        return await run_in_threadpool(scan_frame, image_bytes)
+        return await run_in_threadpool(scan_frame, image_bytes, parsed_zone)
     except Exception as e:
         return {
             "vehicle_detected": False,
@@ -309,6 +318,7 @@ async def scan_frame_endpoint(
 async def analyze_capture_endpoint(
     request: Request,
     file: UploadFile = File(...),
+    zone_points: Optional[str] = Form(None),
     db: Session = Depends(get_db),
     session_id: str = Depends(_get_session_id),
 ):
@@ -323,8 +333,15 @@ async def analyze_capture_endpoint(
     from starlette.concurrency import run_in_threadpool
     image_bytes = await file.read()
 
+    parsed_zone = None
+    if zone_points:
+        try:
+            parsed_zone = json.loads(zone_points)
+        except Exception as e:
+            pass
+
     try:
-        analysis = await run_in_threadpool(analyze_capture, image_bytes)
+        analysis = await run_in_threadpool(analyze_capture, image_bytes, parsed_zone)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
