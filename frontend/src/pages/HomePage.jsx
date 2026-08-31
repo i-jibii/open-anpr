@@ -86,7 +86,7 @@ export default function HomePage() {
         <div className="feature-card">
           <div className="feature-icon"><Camera style={{ color: 'var(--accent)' }} size={32} /></div>
           <h3>Auto-Scan Camera</h3>
-          <p>Scan plates dynamically using any connected webcam or your phone camera.</p>
+          <p>Scan plates dynamically using any connected webcam or your phone camera. Draw custom Detection Zones to isolate scanning to specific areas and block out background noise.</p>
         </div>
         <div className="feature-card">
           <div className="feature-icon"><ClipboardList style={{ color: 'var(--accent)' }} size={32} /></div>

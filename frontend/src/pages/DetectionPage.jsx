@@ -707,6 +707,7 @@ export default function DetectionPage() {
               <ul className="info-constraints-list">
                 <li><strong>Camera Quality:</strong> Blurry or low-resolution webcams will reduce text clarity.</li>
                 <li><strong>Lighting & Motion:</strong> Extreme glare, low-light environments, or motion blur from fast-moving vehicles can obscure plate characteristics.</li>
+                <li><strong>Detection Zones:</strong> Use the <b>Zone</b> tool to draw a boundary that restricts detection to a specific area (e.g., a gate entrance) to avoid scanning parked cars in the background.</li>
                 <li><strong>Single-File Processing:</strong> Designed for one vehicle at a time in a queue fashion (e.g., single lane entry/exit). Multiple cars side-by-side will be processed sequentially.</li>
                 <li><strong>Standard Formats:</strong> The system enforces alphanumeric mixture rules; purely text banners will be ignored.</li>
               </ul>
