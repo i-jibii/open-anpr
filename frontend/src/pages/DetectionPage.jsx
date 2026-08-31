@@ -49,11 +49,8 @@ export default function DetectionPage() {
   const [analysisResult, setAnalysisResult] = useState(null);
   const [previewOpen, setPreviewOpen] = useState(false);
 
-  // Manual mode
-  const [manualPlate, setManualPlate] = useState('');
-  const [confidence, setConfidence] = useState(95);
+  // History tracking
   const [lastResult, setLastResult] = useState(null);
-  const [detecting, setDetecting] = useState(false);
   const [history, setHistory] = useState([]);
 
   // Progress steps for the analysis phase
@@ -295,32 +292,6 @@ export default function DetectionPage() {
       setAutoScanActive(false);
     }
   }, []);
-
-  // ── Manual Submit ─────────────────────────────────────────────────────────
-  const submitPlate = useCallback(async (plateStr, conf = null) => {
-    if (!plateStr || !plateStr.trim()) return;
-    setDetecting(true);
-    try {
-      const res = await detectPlate(plateStr.trim(), conf);
-      const data = res.data;
-      if (data.duplicate_skipped) {
-        setDetecting(false);
-        return;
-      }
-      setLastResult(data);
-      setHistory((prev) => [data, ...prev.slice(0, 19)]);
-    } catch (err) {
-      console.error('Detection error:', err);
-      setLastResult({ error: err?.response?.data?.detail || 'Detection failed.' });
-    } finally {
-      setDetecting(false);
-    }
-  }, []);
-
-  const handleManualSubmit = (e) => {
-    e.preventDefault();
-    submitPlate(manualPlate, parseFloat(confidence));
-  };
 
   const resumeScan = () => {
     setAnalysisResult(null);
@@ -590,34 +561,7 @@ export default function DetectionPage() {
             </div>
           )}
 
-          {scanStatus === 'idle' && (
-            <div className="detection-form-card">
-              <h2 className="panel-title">Manual Plate Submission</h2>
-              <p className="panel-subtitle">Or type a plate number manually for quick classification.</p>
-              <form onSubmit={handleManualSubmit} className="detection-form">
-                <div className="form-group">
-                  <label htmlFor="manualPlate">Plate Number</label>
-                  <input
-                    id="manualPlate" type="text" className="form-input large-input" placeholder="e.g. ABC 1234"
-                    value={manualPlate} onChange={(e) => setManualPlate(e.target.value.toUpperCase())} maxLength={40} autoCapitalize="characters"
-                  />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="confidence">OCR Confidence: {confidence}%</label>
-                  <input
-                    id="confidence" type="range" min={50} max={100} value={confidence}
-                    onChange={(e) => setConfidence(e.target.value)} className="confidence-slider"
-                  />
-                </div>
-                <div className="detect-actions">
-                  <button type="submit" className="detect-btn" disabled={detecting || !manualPlate.trim()}>
-                    {detecting ? <Loader2 size={16} className="spinning" /> : <Search size={16} />}
-                    {detecting ? 'Detecting...' : 'Detect Plate'}
-                  </button>
-                </div>
-              </form>
-            </div>
-          )}
+
 
           {lastResult && !lastResult.error && scanStatus === 'idle' && (() => {
             const kindInfo = ALERT_KIND_LABELS[lastResult.alert_kind] || { label: lastResult.alert_kind, className: 'anomaly', icon: AlertTriangle };
