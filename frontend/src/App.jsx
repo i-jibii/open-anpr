@@ -34,12 +34,12 @@ function App() {
             <div className="privacy-icon"><ShieldCheck size={48} /></div>
             <h2>Data Privacy & Security</h2>
             <p className="privacy-text">
-              Welcome to <strong>OpenANPR</strong>, a portfolio demonstration system. We take your privacy seriously.
+              Welcome to <strong>OpenANPR</strong>, a portfolio demonstration system. Your privacy is taken seriously.
             </p>
             <ul className="privacy-list">
-              <li><strong>Session Isolated:</strong> Text logs are strictly bound to your current browser session. Captured photos are NEVER saved to our database—they exist only in your device's temporary memory.</li>
+              <li><strong>Session Isolated:</strong> Text logs are strictly bound to your current browser session. Captured photos are NEVER saved to the database—they exist only in your device's temporary memory.</li>
               <li><strong>No Public Sharing:</strong> Nothing you capture or upload is shared publicly or shown to other users.</li>
-              <li><strong>No Data Harvesting:</strong> We do not collect, sell, or monitor your personal data.</li>
+              <li><strong>No Data Harvesting:</strong> This system does not collect, sell, or monitor any personal data.</li>
               <li><strong>Ephemeral Storage:</strong> Your session data is isolated and safely discarded over time.</li>
             </ul>
             <button className="btn btn-primary privacy-btn" onClick={handleAccept}>
