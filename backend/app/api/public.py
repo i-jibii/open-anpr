@@ -350,6 +350,8 @@ async def analyze_capture_endpoint(
 
     # Build the classification result
     classification = None
+    is_overridden = False
+
     if plate_text:
         detect_req = DetectRequest(
             plate=plate_text, 
@@ -359,6 +361,17 @@ async def analyze_capture_endpoint(
             detected_brand=analysis.get("vehicle_brand")
         )
         classification = await detect_plate(request, detect_req, db, session_id)
+
+        # Ground Truth Override Logic
+        if classification and classification.get("vehicle"):
+            reg = classification["vehicle"]
+            if reg.get("type"):
+                analysis["vehicle_type"] = reg["type"].title()
+            if reg.get("brand"):
+                analysis["vehicle_brand"] = reg["brand"].title()
+            if reg.get("color"):
+                analysis["vehicle_color"] = reg["color"].title()
+            is_overridden = True
 
     return {
         "status": "ok",
@@ -371,6 +384,7 @@ async def analyze_capture_endpoint(
         "plate_box": analysis.get("plate_box"),
         "preview_b64": analysis.get("preview_b64"),
         "classification": classification,
+        "is_overridden": is_overridden,
     }
 
 

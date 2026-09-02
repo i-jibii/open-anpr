@@ -518,7 +518,25 @@ export default function DetectionPage() {
 
           {analysisResult && scanStatus !== 'analyzing' && scanStatus !== 'capturing' && (
             <div className="analysis-result-card">
-              <h2 className="panel-title">Detection Result</h2>
+              <h2 className="panel-title" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                Detection Result
+                {analysisResult.is_overridden && (
+                  <span className="verified-badge" style={{ 
+                    display: 'inline-flex', 
+                    alignItems: 'center', 
+                    gap: '4px', 
+                    fontSize: '0.7rem', 
+                    background: 'var(--green-bg)', 
+                    color: 'var(--green)', 
+                    padding: '2px 6px', 
+                    borderRadius: '4px',
+                    fontWeight: 'bold',
+                    textTransform: 'uppercase'
+                  }}>
+                    <CheckCircle2 size={10} /> Verified by Registry
+                  </span>
+                )}
+              </h2>
               {analysisResult.preview_b64 && (
                 <div className="preview-container" onClick={() => setPreviewOpen(true)}>
                   <img src={`data:image/jpeg;base64,${analysisResult.preview_b64}`} alt="Annotated capture" className="preview-thumb" />
