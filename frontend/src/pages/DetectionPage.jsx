@@ -278,29 +278,36 @@ export default function DetectionPage() {
 
       setAnalysisResult(data);
       setScanStatus('done');
-      setAutoScanActive(false);
-      scanningRef.current = false;
 
       if (data.classification && !data.classification.duplicate_skipped) {
         setLastResult(data.classification);
         setHistory((prev) => [data.classification, ...prev.slice(0, 19)]);
       }
+
+      // Continuous scanning: Auto-resume after 2.5 seconds
+      if (scanningRef.current) {
+        setTimeout(() => {
+          if (scanningRef.current) {
+            setScanStatus('scanning');
+            isAnalyzingRef.current = false;
+          }
+        }, 2500);
+      } else {
+        setAutoScanActive(false);
+      }
     } catch (err) {
       console.error('Analysis error:', err);
-      setScanStatus('idle');
       setAnalysisResult(null);
-      setAutoScanActive(false);
+      if (scanningRef.current) {
+        setScanStatus('scanning');
+        isAnalyzingRef.current = false;
+      } else {
+        setScanStatus('idle');
+        setAutoScanActive(false);
+      }
     }
   }, []);
 
-  const resumeScan = () => {
-    setAnalysisResult(null);
-    setScanStatus('idle');
-    setVehicleBox(null);
-    setPlateBox(null);
-    setAnalysisSteps([]);
-    startAutoScan();
-  };
 
   const getScanStatusDisplay = () => {
     switch (scanStatus) {
@@ -468,19 +475,15 @@ export default function DetectionPage() {
 
           {cameraActive && (
             <div className="autoscan-controls">
-              {!autoScanActive && scanStatus !== 'analyzing' && scanStatus !== 'done' ? (
+              {!autoScanActive ? (
                 <button className="autoscan-btn start" onClick={startAutoScan}>
                   <Play size={16} /> Start Auto-Scan
                 </button>
-              ) : scanStatus === 'done' ? (
-                <button className="autoscan-btn resume" onClick={resumeScan}>
-                  <RefreshCw size={16} /> Scan Next Vehicle
-                </button>
-              ) : scanStatus !== 'analyzing' ? (
+              ) : (
                 <button className="autoscan-btn stop" onClick={stopAutoScan}>
                   <Square size={16} /> Stop Scanning
                 </button>
-              ) : null}
+              )}
             </div>
           )}
         </div>
