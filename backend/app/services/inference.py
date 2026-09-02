@@ -421,28 +421,7 @@ def _draw_annotated_preview(img: np.ndarray, analysis: dict) -> str:
         brand_label = f'{analysis.get("vehicle_brand", "Brand")} {bb["conf"]:.0f}%'
         _put_label(canvas, brand_label, bb["x1"], bb["y1"] - 10, (0, 165, 255))
 
-    # ── Draw info overlay (top-left) ──────────────────────────────────────────
-    overlay_lines = [
-        f"Vehicle Type : {analysis.get('vehicle_type') or 'N/A'}",
-        f"Vehicle Brand: {analysis.get('vehicle_brand') or 'N/A'}",
-        f"Vehicle Color: {analysis.get('vehicle_color') or 'N/A'}",
-        f"Plate Number : {analysis.get('plate') or 'N/A'}",
-        f"Confidence   : {analysis.get('confidence', 0):.1f}%",
-    ]
 
-    # Semi-transparent background for text
-    overlay_h = 30 * len(overlay_lines) + 20
-    overlay_w = 380
-    sub = canvas[10:10 + overlay_h, 10:10 + overlay_w]
-    if sub.shape[0] > 0 and sub.shape[1] > 0:
-        dark = np.zeros_like(sub)
-        cv2.addWeighted(sub, 0.3, dark, 0.7, 0, sub)
-        canvas[10:10 + overlay_h, 10:10 + overlay_w] = sub
-
-    for i, line in enumerate(overlay_lines):
-        y = 38 + i * 30
-        cv2.putText(canvas, line, (20, y), cv2.FONT_HERSHEY_SIMPLEX,
-                     0.55, (255, 255, 255), 1, cv2.LINE_AA)
 
     # ── Encode to JPEG → base64 ──────────────────────────────────────────────
     _, buf = cv2.imencode(".jpg", canvas, [cv2.IMWRITE_JPEG_QUALITY, 88])
