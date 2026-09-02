@@ -24,6 +24,7 @@ export default function DetectionPage() {
   const scanLoopRef = useRef(null);
   const scanningRef = useRef(false);
   const isAnalyzingRef = useRef(false);
+  const cooldownRef = useRef(false);
 
   const [cameraActive, setCameraActive] = useState(false);
   const [cameraError, setCameraError] = useState(null);
@@ -219,7 +220,7 @@ export default function DetectionPage() {
             if (data.plate_detected) {
               setPlateBox(data.plate_box);
 
-              if (data.capture_ready && !isAnalyzingRef.current) {
+              if (data.capture_ready && !isAnalyzingRef.current && !cooldownRef.current) {
                 isAnalyzingRef.current = true;
                 setScanStatus('capturing');
 
@@ -276,22 +277,25 @@ export default function DetectionPage() {
 
       setAnalysisSteps((prev) => prev.map((s) => ({ ...s, status: 'done' })));
 
-      setAnalysisResult(data);
-      setScanStatus('done');
-
-      if (data.classification && !data.classification.duplicate_skipped) {
-        setLastResult(data.classification);
-        setHistory((prev) => [data.classification, ...prev.slice(0, 19)]);
+      // Only update the big result card and history if it's NOT a duplicate skipped by the backend
+      if (!data.classification?.duplicate_skipped) {
+        setAnalysisResult(data);
+        if (data.classification) {
+          setLastResult(data.classification);
+          setHistory((prev) => [data.classification, ...prev.slice(0, 19)]);
+        }
       }
 
-      // Continuous scanning: Auto-resume after 2.5 seconds
+      // Immediately go back to scanning
       if (scanningRef.current) {
+        setScanStatus('scanning');
+        isAnalyzingRef.current = false;
+        
+        // Lock the deep analysis for 4 seconds (bumper-to-bumper failsafe cooldown)
+        cooldownRef.current = true;
         setTimeout(() => {
-          if (scanningRef.current) {
-            setScanStatus('scanning');
-            isAnalyzingRef.current = false;
-          }
-        }, 2500);
+          cooldownRef.current = false;
+        }, 4000);
       } else {
         setAutoScanActive(false);
       }
