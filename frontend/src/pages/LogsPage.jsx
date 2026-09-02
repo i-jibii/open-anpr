@@ -79,10 +79,17 @@ export default function LogsPage() {
     const baseOptions = [5, 10, 30, 40];
     return baseOptions.filter((opt, idx) => {
       if (idx === 0) return true; // Always show 5
-      // Show next option only if total entries exceeds the previous option
-      return totalFiltered > baseOptions[idx - 1];
+      // Show option only if total entries truly reaches this threshold
+      return totalFiltered >= opt;
     });
   }, [totalFiltered]);
+
+  // Ensure entriesPerPage stays valid if options shrink
+  useEffect(() => {
+    if (!availableOptions.includes(entriesPerPage)) {
+      setEntriesPerPage(availableOptions[availableOptions.length - 1]);
+    }
+  }, [availableOptions, entriesPerPage]);
 
   // Page numbers logic (max 5 buttons visible)
   const getPageNumbers = () => {

@@ -616,6 +616,7 @@ export default function DetectionPage() {
               (historyCurrentPage - 1) * historyEntriesPerPage,
               historyCurrentPage * historyEntriesPerPage
             );
+            const availableOptions = [5, 10, 20].filter((opt, idx) => idx === 0 || totalHistory >= opt);
 
             return (
               <div className="history-panel">
@@ -654,7 +655,7 @@ export default function DetectionPage() {
                         }}
                         className="entries-select"
                       >
-                        {[5, 10, 20].map(opt => (
+                        {availableOptions.map(opt => (
                           <option key={opt} value={opt}>{opt} entries</option>
                         ))}
                       </select>
