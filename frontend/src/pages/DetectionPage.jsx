@@ -3,7 +3,7 @@ import { detectPlate, scanFrame, analyzeCapture } from '../services/api';
 import { 
   CheckCircle2, AlertTriangle, ShieldAlert, Camera, Square, RefreshCw, X, 
   Maximize, Play, Search, Loader2, Circle, ArrowDownLeft, ArrowUpRight, Info,
-  PenTool, Undo2, Trash2, Check
+  PenTool, Undo2, Trash2, Check, ChevronLeft, ChevronRight
 } from 'lucide-react';
 import './DetectionPage.css';
 
@@ -53,6 +53,8 @@ export default function DetectionPage() {
   // History tracking
   const [lastResult, setLastResult] = useState(null);
   const [history, setHistory] = useState([]);
+  const [historyCurrentPage, setHistoryCurrentPage] = useState(1);
+  const [historyEntriesPerPage, setHistoryEntriesPerPage] = useState(5);
 
   // Progress steps for the analysis phase
   const [analysisSteps, setAnalysisSteps] = useState([]);
@@ -282,7 +284,7 @@ export default function DetectionPage() {
         setAnalysisResult(data);
         if (data.classification) {
           setLastResult(data.classification);
-          setHistory((prev) => [data, ...prev.slice(0, 19)]);
+          setHistory((prev) => [data, ...prev.slice(0, 49)]);
         }
       }
 
@@ -607,33 +609,91 @@ export default function DetectionPage() {
             </div>
           )}
 
-          {history.length > 0 && (
-            <div className="history-panel">
-              <h3 className="history-title">Recent Detections</h3>
-              {history.map((dataItem, idx) => {
-                const item = dataItem.classification;
-                const kindInfo = ALERT_KIND_LABELS[item.alert_kind] || { label: item.alert_kind, className: 'anomaly', icon: AlertTriangle };
-                return (
-                  <div 
-                    key={idx} 
-                    className={`history-item ${kindInfo.className}`}
-                    onClick={() => setAnalysisResult(dataItem)}
-                    style={{ cursor: 'pointer' }}
-                  >
-                    <span className="history-plate">{item.plate_display}</span>
-                    <span className="history-kind" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                      {kindInfo.label}
-                    </span>
-                    {item.direction && (
-                      <span className="history-dir" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', marginLeft: '6px' }}>
-                        {item.direction === 'entry' ? <ArrowDownLeft size={14} /> : <ArrowUpRight size={14} />}
+          {history.length > 0 && (() => {
+            const totalHistory = history.length;
+            const totalHistoryPages = Math.ceil(totalHistory / historyEntriesPerPage);
+            const currentHistory = history.slice(
+              (historyCurrentPage - 1) * historyEntriesPerPage,
+              historyCurrentPage * historyEntriesPerPage
+            );
+
+            return (
+              <div className="history-panel">
+                <h3 className="history-title">Recent Detections</h3>
+                {currentHistory.map((dataItem, idx) => {
+                  const item = dataItem.classification;
+                  const kindInfo = ALERT_KIND_LABELS[item.alert_kind] || { label: item.alert_kind, className: 'anomaly', icon: AlertTriangle };
+                  return (
+                    <div 
+                      key={idx} 
+                      className={`history-item ${kindInfo.className}`}
+                      onClick={() => setAnalysisResult(dataItem)}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      <span className="history-plate">{item.plate_display}</span>
+                      <span className="history-kind" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                        {kindInfo.label}
                       </span>
-                    )}
+                      {item.direction && (
+                        <span className="history-dir" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', marginLeft: '6px' }}>
+                          {item.direction === 'entry' ? <ArrowDownLeft size={14} /> : <ArrowUpRight size={14} />}
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
+
+                {totalHistory > 5 && (
+                  <div className="pagination-container" style={{ marginTop: '1rem', background: 'transparent', padding: '0', border: 'none' }}>
+                    <div className="pagination-dropdown">
+                      <select 
+                        value={historyEntriesPerPage} 
+                        onChange={(e) => {
+                          setHistoryEntriesPerPage(Number(e.target.value));
+                          setHistoryCurrentPage(1);
+                        }}
+                        className="entries-select"
+                      >
+                        {[5, 10, 20].map(opt => (
+                          <option key={opt} value={opt}>{opt} entries</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="pagination-buttons">
+                      <button 
+                        className="pagination-btn icon-btn" 
+                        onClick={() => setHistoryCurrentPage(p => Math.max(1, p - 1))}
+                        disabled={historyCurrentPage === 1}
+                        title="Previous"
+                      >
+                        <ChevronLeft size={16} />
+                      </button>
+                      
+                      {Array.from({ length: totalHistoryPages }, (_, i) => i + 1).map(num => (
+                        <button 
+                          key={num}
+                          className={`pagination-btn ${num === historyCurrentPage ? 'active' : ''}`}
+                          onClick={() => setHistoryCurrentPage(num)}
+                        >
+                          {num}
+                        </button>
+                      ))}
+
+                      <button 
+                        className="pagination-btn icon-btn" 
+                        onClick={() => setHistoryCurrentPage(p => Math.min(totalHistoryPages, p + 1))}
+                        disabled={historyCurrentPage === totalHistoryPages}
+                        title="Next"
+                      >
+                        <ChevronRight size={16} />
+                      </button>
+                    </div>
                   </div>
-                );
-              })}
-            </div>
-          )}
+                )}
+              </div>
+            );
+          })()}
         </div>
       </div>
 
