@@ -45,7 +45,7 @@ def get_vehicle_model():
     global _vehicle_model
     if _vehicle_model is None:
         from ultralytics import YOLO
-        path = _resolve_weight("vehicle_v3_yolo26_best.pt", "vehicle_best.pt")
+        path = _resolve_weight("vehicle_best.pt", "vehicle_v3_yolo26_best.pt")
         _vehicle_model = YOLO(str(path))
         logger.info(f"Vehicle model loaded: {path.name}")
     return _vehicle_model
