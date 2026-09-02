@@ -119,8 +119,8 @@ export default function HomePage() {
             <p>Detection relies heavily on hardware. Blurry or low-resolution webcam feeds will severely reduce OCR accuracy.</p>
           </div>
           <div className="constraint-item">
-            <h4><Sun size={16} /> Lighting & Motion</h4>
-            <p>Extreme glare, low-light environments, or motion blur from fast-moving vehicles can obscure plate characteristics and reduce readability.</p>
+            <h4><Sun size={16} /> Lighting & Brand Similarity</h4>
+            <p>Extreme glare, low-light environments, or highly similar car brand logos might reduce classification accuracy and cause misidentifications.</p>
           </div>
           <div className="constraint-item">
             <h4><AlertTriangle size={16} /> Non-Standard Plates</h4>
