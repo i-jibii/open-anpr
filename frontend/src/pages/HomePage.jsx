@@ -101,7 +101,7 @@ export default function HomePage() {
         <div className="feature-card">
           <div className="feature-icon"><ShieldCheck style={{ color: 'var(--accent)' }} size={32} /></div>
           <h3>Session Isolated</h3>
-          <p>No login required. All your data is privately isolated to your current browser session.</p>
+          <p>No login required. Your text logs are privately isolated to your current browser session. Captured photos are NEVER saved to the database—they exist purely in your device's temporary memory!</p>
         </div>
       </div>
 

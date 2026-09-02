@@ -282,7 +282,7 @@ export default function DetectionPage() {
         setAnalysisResult(data);
         if (data.classification) {
           setLastResult(data.classification);
-          setHistory((prev) => [data.classification, ...prev.slice(0, 19)]);
+          setHistory((prev) => [data, ...prev.slice(0, 19)]);
         }
       }
 
@@ -570,7 +570,7 @@ export default function DetectionPage() {
 
 
 
-          {lastResult && !lastResult.error && scanStatus === 'idle' && (() => {
+          {lastResult && !lastResult.error && scanStatus === 'idle' && !analysisResult && (() => {
             const kindInfo = ALERT_KIND_LABELS[lastResult.alert_kind] || { label: lastResult.alert_kind, className: 'anomaly', icon: AlertTriangle };
             const IconComponent = kindInfo.icon;
             return (
@@ -610,10 +610,16 @@ export default function DetectionPage() {
           {history.length > 0 && (
             <div className="history-panel">
               <h3 className="history-title">Recent Detections</h3>
-              {history.map((item, idx) => {
+              {history.map((dataItem, idx) => {
+                const item = dataItem.classification;
                 const kindInfo = ALERT_KIND_LABELS[item.alert_kind] || { label: item.alert_kind, className: 'anomaly', icon: AlertTriangle };
                 return (
-                  <div key={idx} className={`history-item ${kindInfo.className}`}>
+                  <div 
+                    key={idx} 
+                    className={`history-item ${kindInfo.className}`}
+                    onClick={() => setAnalysisResult(dataItem)}
+                    style={{ cursor: 'pointer' }}
+                  >
                     <span className="history-plate">{item.plate_display}</span>
                     <span className="history-kind" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                       {kindInfo.label}

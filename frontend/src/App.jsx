@@ -37,7 +37,7 @@ function App() {
               Welcome to <strong>OpenANPR</strong>, a portfolio demonstration system. We take your privacy seriously.
             </p>
             <ul className="privacy-list">
-              <li><strong>Session Isolated:</strong> Your data (vehicles, logs, images) is strictly bound to your current browser session.</li>
+              <li><strong>Session Isolated:</strong> Text logs are strictly bound to your current browser session. Captured photos are NEVER saved to our database—they exist only in your device's temporary memory.</li>
               <li><strong>No Public Sharing:</strong> Nothing you capture or upload is shared publicly or shown to other users.</li>
               <li><strong>No Data Harvesting:</strong> We do not collect, sell, or monitor your personal data.</li>
               <li><strong>Ephemeral Storage:</strong> Your session data is isolated and safely discarded over time.</li>
