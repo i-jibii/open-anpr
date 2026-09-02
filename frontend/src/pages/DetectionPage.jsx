@@ -514,7 +514,7 @@ export default function DetectionPage() {
             </div>
           )}
 
-          {analysisResult && scanStatus === 'done' && (
+          {analysisResult && scanStatus !== 'analyzing' && scanStatus !== 'capturing' && (
             <div className="analysis-result-card">
               <h2 className="panel-title">Detection Result</h2>
               {analysisResult.preview_b64 && (
