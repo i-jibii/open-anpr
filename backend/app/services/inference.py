@@ -75,7 +75,7 @@ def get_brand_model():
     global _brand_model
     if _brand_model is None:
         from ultralytics import YOLO
-        path = _resolve_weight("brand_v2_yolo26_best.pt", "brand_best.pt")
+        path = _resolve_weight("brand_yolov8_v3_best.pt", "brand_best.pt")
         _brand_model = YOLO(str(path))
         logger.info(f"Brand model loaded: {path.name}")
     return _brand_model
