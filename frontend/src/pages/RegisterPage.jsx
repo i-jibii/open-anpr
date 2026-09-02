@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { registerVehicle, getVehicles, deleteVehicle, updateVehicle } from '../services/api';
-import { CheckCircle2, Ban, Clock, Trash2, ArrowUpRight, ArrowDownLeft, ChevronDown, Edit2, X } from 'lucide-react';
+import { CheckCircle2, Ban, Clock, Trash2, ArrowUpRight, ArrowDownLeft, ChevronDown, Edit2, X, ChevronLeft, ChevronRight, Search } from 'lucide-react';
 import './RegisterPage.css';
 
 const VEHICLE_TYPES = ['Car', 'Motorcycle', 'Van', 'Truck', 'Other'];
@@ -137,6 +137,11 @@ export default function RegisterPage() {
   const [editingVehicle, setEditingVehicle] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState(null);
+
+  // Pagination & Search for Registered Vehicles
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [entriesPerPage, setEntriesPerPage] = useState(6);
 
   const openEditModal = (v) => {
     setEditingVehicle(v);
@@ -292,6 +297,46 @@ export default function RegisterPage() {
     }
   };
 
+  const filteredVehicles = useMemo(() => {
+    if (!searchTerm.trim()) return vehicles;
+    const lowerSearch = searchTerm.toLowerCase();
+    return vehicles.filter(v => 
+      v.plate_number.toLowerCase().includes(lowerSearch) || 
+      (v.brand && v.brand.toLowerCase().includes(lowerSearch))
+    );
+  }, [vehicles, searchTerm]);
+
+  // Reset page to 1 when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
+  const totalFiltered = filteredVehicles.length;
+  const totalPages = Math.max(1, Math.ceil(totalFiltered / entriesPerPage));
+
+  // Ensure current page is valid
+  useEffect(() => {
+    if (currentPage > totalPages && totalPages > 0) {
+      setCurrentPage(totalPages);
+    }
+  }, [totalPages, currentPage]);
+
+  const currentVehicles = useMemo(() => {
+    const start = (currentPage - 1) * entriesPerPage;
+    return filteredVehicles.slice(start, start + entriesPerPage);
+  }, [filteredVehicles, currentPage, entriesPerPage]);
+
+  const availableOptions = useMemo(() => {
+    const baseOptions = [6, 12, 24];
+    return baseOptions.filter((opt, idx) => idx === 0 || totalFiltered >= opt);
+  }, [totalFiltered]);
+
+  useEffect(() => {
+    if (!availableOptions.includes(entriesPerPage)) {
+      setEntriesPerPage(availableOptions[availableOptions.length - 1]);
+    }
+  }, [availableOptions, entriesPerPage]);
+
   return (
     <div className="register-page">
       <div className="register-form-section">
@@ -384,61 +429,131 @@ export default function RegisterPage() {
       </div>
 
       <div className="registered-vehicles-section">
-        <h2 className="section-title">
-          Your Registered Vehicles
-          <span className="vehicle-count">{vehicles.length}</span>
-        </h2>
+        <div className="registered-header" style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', gap: '1rem' }}>
+          <h2 className="section-title" style={{ margin: 0 }}>
+            Your Registered Vehicles
+            <span className="vehicle-count">{vehicles.length}</span>
+          </h2>
+          
+          <div className="vehicle-search-box" style={{ position: 'relative', minWidth: '250px' }}>
+            <Search size={16} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+            <input 
+              type="text" 
+              className="form-input" 
+              placeholder="Search by plate or brand..." 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              style={{ paddingLeft: '32px', width: '100%', boxSizing: 'border-box' }}
+            />
+          </div>
+        </div>
 
         {vehicles.length === 0 ? (
           <div className="empty-state">
             No vehicles registered yet. Add one above to start testing detection.
           </div>
+        ) : filteredVehicles.length === 0 ? (
+          <div className="empty-state">
+            No vehicles found matching "{searchTerm}".
+          </div>
         ) : (
-          <div className="vehicle-list">
-            {vehicles.map((v) => (
-              <div key={v.id} className={`vehicle-card status-${v.status}`}>
-                <div className="vehicle-plate">{v.plate_number}</div>
-                <div className="vehicle-details">
-                  <span className="vehicle-meta">{v.type}</span>
-                  {v.brand && <span className="vehicle-meta">{v.brand}</span>}
-                  {v.color && <span className="vehicle-meta">{v.color}</span>}
-                </div>
-                <div className="vehicle-footer">
-                  <span className={`status-badge ${v.status}`} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    {v.status === 'approved' && <CheckCircle2 size={12} />}
-                    {v.status === 'blacklisted' && <Ban size={12} />}
-                    {v.status === 'expired' && <Clock size={12} />}
-                    {v.status.charAt(0).toUpperCase() + v.status.slice(1)}
-                  </span>
-                  
-                  {v.is_on_premises && (
-                    <span className="on-premises-badge" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <ArrowDownLeft size={12} /> On Premises
+          <>
+            <div className="vehicle-list">
+              {currentVehicles.map((v) => (
+                <div key={v.id} className={`vehicle-card status-${v.status}`}>
+                  <div className="vehicle-plate">{v.plate_number}</div>
+                  <div className="vehicle-details">
+                    <span className="vehicle-meta">{v.type}</span>
+                    {v.brand && <span className="vehicle-meta">{v.brand}</span>}
+                    {v.color && <span className="vehicle-meta">{v.color}</span>}
+                  </div>
+                  <div className="vehicle-footer">
+                    <span className={`status-badge ${v.status}`} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      {v.status === 'approved' && <CheckCircle2 size={12} />}
+                      {v.status === 'blacklisted' && <Ban size={12} />}
+                      {v.status === 'expired' && <Clock size={12} />}
+                      {v.status.charAt(0).toUpperCase() + v.status.slice(1)}
                     </span>
-                  )}
-                  
-                  <div style={{ display: 'flex', gap: '8px', marginLeft: 'auto' }}>
-                    <button
-                      className="edit-btn"
-                      onClick={() => openEditModal(v)}
-                      title="Edit vehicle"
-                      style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}
-                    >
-                      <Edit2 size={16} />
-                    </button>
-                    <button
-                      className="delete-btn"
-                      onClick={() => setDeleteTarget(v)}
-                      title="Remove vehicle"
-                      style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}
-                    >
-                      <Trash2 size={16} />
-                    </button>
+                    
+                    {v.is_on_premises && (
+                      <span className="on-premises-badge" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <ArrowDownLeft size={12} /> On Premises
+                      </span>
+                    )}
+                    
+                    <div style={{ display: 'flex', gap: '8px', marginLeft: 'auto' }}>
+                      <button
+                        className="edit-btn"
+                        onClick={() => openEditModal(v)}
+                        title="Edit vehicle"
+                        style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}
+                      >
+                        <Edit2 size={16} />
+                      </button>
+                      <button
+                        className="delete-btn"
+                        onClick={() => setDeleteTarget(v)}
+                        title="Remove vehicle"
+                        style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
                   </div>
                 </div>
+              ))}
+            </div>
+
+            {/* Pagination Controls */}
+            {totalFiltered > 6 && (
+              <div className="pagination-container" style={{ marginTop: '2rem' }}>
+                <div className="pagination-dropdown">
+                  <select 
+                    value={entriesPerPage} 
+                    onChange={(e) => {
+                      setEntriesPerPage(Number(e.target.value));
+                      setCurrentPage(1);
+                    }}
+                    className="entries-select"
+                  >
+                    {availableOptions.map(opt => (
+                      <option key={opt} value={opt}>{opt} vehicles</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="pagination-buttons">
+                  <button 
+                    className="pagination-btn icon-btn" 
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    title="Previous"
+                  >
+                    <ChevronLeft size={16} />
+                  </button>
+                  
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(num => (
+                    <button 
+                      key={num}
+                      className={`pagination-btn ${num === currentPage ? 'active' : ''}`}
+                      onClick={() => setCurrentPage(num)}
+                    >
+                      {num}
+                    </button>
+                  ))}
+
+                  <button 
+                    className="pagination-btn icon-btn" 
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                    title="Next"
+                  >
+                    <ChevronRight size={16} />
+                  </button>
+                </div>
               </div>
-            ))}
-          </div>
+            )}
+          </>
         )}
       </div>
 
