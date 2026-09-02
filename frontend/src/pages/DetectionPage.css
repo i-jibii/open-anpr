@@ -40,6 +40,7 @@
   border-radius: 0;
   width: 100vw;
   height: 100vh;
+  max-width: none;
 }
 
 .camera-panel.fullscreen-mode .video-container {
